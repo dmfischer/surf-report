@@ -8,8 +8,8 @@ app.get("/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-app.get("/conditions/:zipCode", (req: Request<{zipCode: string}>, res: Response) => {
-    res.json(getConditions(req.params.zipCode));
+app.get("/conditions/:zipCode", async (req: Request<{zipCode: string}>, res: Response) => {
+    res.json(await getConditions(req.params.zipCode));
 });
 
 app.listen(PORT, () => {

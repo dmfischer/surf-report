@@ -1,9 +1,9 @@
 import { Station } from "./station";
-import { TidePrediction } from "./tide-prediction";
+import { TideLevel } from "./tide-level";
 
 export interface ConditionsResponse {
     zipCode: string;
     description: string;
     station: Station | null;
-    tidePrediction: TidePrediction | null;
+    tideLevels: TideLevel[];
 }

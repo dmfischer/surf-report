@@ -4,4 +4,5 @@ export interface Station {
     state: string;
     lat: number;
     lng: number;
+    type: 'R' | 'S';
 }

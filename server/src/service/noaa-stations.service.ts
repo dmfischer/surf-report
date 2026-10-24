@@ -18,9 +18,12 @@ export async function loadStations(): Promise<void> {
     console.log(`Loaded ${stations.length} NOAA tide prediction stations`);
 }
 
-export function getStations(): Station[] {
+export function getStations(includeSubordinate?: boolean): Station[] {
+    if (includeSubordinate) {
+        return stations;
+    }
 
-    return stations;
+    return stations.filter(station => station.type === 'R');
 }
 
 const stationCache: Map<string, Station> = new Map();

@@ -1,3 +1,4 @@
+import tzlookup from "@photostructure/tz-lookup";
 import zipcodes, { ZipCode } from "zipcodes";
 import { Station } from "../model/station";
 import { haversineDistanceMiles } from "../util/haversine";
@@ -13,8 +14,9 @@ export async function loadStations(): Promise<void> {
     if (!response.ok) {
         throw new Error(`Failed to load NOAA stations: ${response.status} ${response.statusText}`);
     }
-    const body = (await response.json()) as { stations: Station[] };
-    stations = body.stations;
+    const body = (await response.json()) as { stations: Omit<Station, "timeZone">[] };
+    // NOAA gives no IANA zone (only a standard-time offset), so derive it once here from lat/lng, offline.
+    stations = body.stations.map((station) => ({ ...station, timeZone: tzlookup(station.lat, station.lng) }));
     console.log(`Loaded ${stations.length} NOAA tide prediction stations`);
 }
 

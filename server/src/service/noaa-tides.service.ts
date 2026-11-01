@@ -3,6 +3,8 @@ import { TideLevel } from "../model/tide-level";
 
 const TIDES_BASE_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
 
+const FETCH_TIMEOUT_MS = 10_000;
+
 const ONE_WEEK_IN_HOURS = 168;
 
 const TIDES_URL_PARAMETERS = {
@@ -29,13 +31,20 @@ export async function getTideLevels(station: Station): Promise<TideLevel[]> {
         range: String(ONE_WEEK_IN_HOURS),
     });
 
-    const response = await fetch(`${TIDES_BASE_URL}?${params}`);
-    if (!response.ok) {
-        console.log(`Failed to load tide levels for station ${station.id}: ${response.status} ${response.statusText}`);
+    // fetch() rejects on network errors/timeouts; json() rejects on non-JSON bodies (e.g. an HTML maintenance page).
+    let body: NoaaPredictionsResponse;
+    try {
+        const response = await fetch(`${TIDES_BASE_URL}?${params}`, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+        if (!response.ok) {
+            console.log(`Failed to load tide levels for station ${station.id}: ${response.status} ${response.statusText}`);
+            return [];
+        }
+
+        body = (await response.json()) as NoaaPredictionsResponse;
+    } catch (error) {
+        console.log(`Failed to load tide levels for station ${station.id}:`, error);
         return [];
     }
-
-    const body = (await response.json()) as NoaaPredictionsResponse;
     if (!body.predictions) {
         console.log(`No tide levels for station ${station.id}: ${body.error?.message}`);
         return [];

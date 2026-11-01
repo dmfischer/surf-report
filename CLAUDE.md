@@ -61,3 +61,17 @@ Conventions:
 ## Working with the developer
 
 The developer is using this project to learn Node.js and TypeScript. Prefer incremental changes — one small step at a time with an explanation of *why* — over large all-at-once edits, and wait for a go-ahead before changing code when asked to review or suggest.
+
+## Sub-agents in worktrees
+
+When delegating code changes to sub-agents with worktree isolation:
+
+- Worktrees are created under `.claude/worktrees/` (gitignored) on an auto-named `worktree-agent-*` branch. Have each agent first run `git switch -c feature/<name>` and commit there; agents don't push.
+- Parallel agents must not start the server (they'd all compete for port 3001). Verify with `npx tsc --noEmit` and throwaway `tsx` scripts outside the repo. Each worktree needs its own `npm ci`.
+- Parallel agents shouldn't edit `CLAUDE.md`. Have them report doc changes, and update it once after their branches are merged.
+- **Cleanup once an agent's work is verified:** a branch checked out in a worktree can't be checked out in the main folder, so remove the worktree and delete the leftover auto-named branch. The `feature/*` branch and its commits are kept:
+  ```bash
+  git worktree remove --force .claude/worktrees/<agent-dir>   # --force: worktree contains node_modules
+  git branch -d worktree-agent-<id>
+  ```
+  Check `git worktree list` and `git branch -vv` before and after.

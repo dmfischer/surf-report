@@ -26,37 +26,53 @@ export function getStations(includeSubordinate?: boolean): Station[] {
     return stations.filter(station => station.type === 'R');
 }
 
-const stationCache: Map<string, Station> = new Map();
+export const DEFAULT_MAX_STATION_DISTANCE_MILES = 50;
 
-export function findStation(zipCode: string): Station | null {
-    const cachedStation = stationCache.get(zipCode);
-    if (cachedStation) {
-        return cachedStation;
-    }
-    
-    const foundZipCode: ZipCode | undefined = zipcodes.lookup(zipCode);
+export type StationLookup =
+    | { status: "ok"; station: Station; distanceMiles: number }
+    | { status: "unknown_zip" }
+    | { status: "no_nearby_station" };
 
-    if (!foundZipCode) {
-        return null;
-    }
+interface NearestStation {
+    station: Station;
+    distanceMiles: number;
+}
 
-    const lat = foundZipCode.latitude;
-    const lng = foundZipCode.longitude;
-    
-    let minDistance = Infinity;
-    let closest: Station | null = null;
+// Caches the nearest station regardless of distance, so any maxDistanceMiles
+// can be applied to a cached entry (this also remembers "none in range").
+const stationCache: Map<string, NearestStation> = new Map();
 
-    for (const station of getStations()) {
-        const distance = haversineDistanceMiles(lat, lng, station.lat, station.lng);
-        if (distance < minDistance) {
-            minDistance = distance;
-            closest = station;
+export function findStation(
+    zipCode: string,
+    maxDistanceMiles: number = DEFAULT_MAX_STATION_DISTANCE_MILES,
+): StationLookup {
+    let nearest: NearestStation | undefined = stationCache.get(zipCode);
+
+    if (!nearest) {
+        const foundZipCode: ZipCode | undefined = zipcodes.lookup(zipCode);
+
+        if (!foundZipCode) {
+            return { status: "unknown_zip" };
+        }
+
+        const lat = foundZipCode.latitude;
+        const lng = foundZipCode.longitude;
+
+        for (const station of getStations()) {
+            const distance = haversineDistanceMiles(lat, lng, station.lat, station.lng);
+            if (!nearest || distance < nearest.distanceMiles) {
+                nearest = { station: station, distanceMiles: distance };
+            }
+        }
+
+        if (nearest) {
+            stationCache.set(zipCode, nearest);
         }
     }
 
-    if (closest) {
-        stationCache.set(zipCode, closest);
+    if (!nearest || nearest.distanceMiles > maxDistanceMiles) {
+        return { status: "no_nearby_station" };
     }
 
-    return closest;
+    return { status: "ok", station: nearest.station, distanceMiles: nearest.distanceMiles };
 }

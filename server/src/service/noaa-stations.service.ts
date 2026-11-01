@@ -5,11 +5,13 @@ import { haversineDistanceMiles } from "../util/haversine";
 const STATIONS_URL =
     "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions&units=english";
 
+const FETCH_TIMEOUT_MS = 10_000;
+
 // Module-level cache: Node evaluates a module once, so every importer shares this array.
 let stations: Station[] = [];
 
 export async function loadStations(): Promise<void> {
-    const response: Response = await fetch(STATIONS_URL);
+    const response: Response = await fetch(STATIONS_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     if (!response.ok) {
         throw new Error(`Failed to load NOAA stations: ${response.status} ${response.statusText}`);
     }

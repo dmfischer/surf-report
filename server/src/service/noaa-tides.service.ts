@@ -12,7 +12,8 @@ const TIDES_URL_PARAMETERS = {
     interval: "h",
     datum: "MLLW",
     units: "english",
-    time_zone: "lst_ldt",
+    // GMT so times are unambiguous instants (station-local times skip/repeat hours on DST changes).
+    time_zone: "gmt",
     format: "json",
     application: "surf-report",
 };
@@ -23,11 +24,11 @@ interface NoaaPredictionsResponse {
     error?: { message: string };
 }
 
-export async function getTideLevels(station: Station): Promise<TideLevel[]> {
+export async function getTideLevels(station: Station, now: Date = new Date()): Promise<TideLevel[]> {
     const params = new URLSearchParams({
         ...TIDES_URL_PARAMETERS,
         station: station.id,
-        begin_date: formatNoaaDate(new Date()),
+        begin_date: formatNoaaDate(stationMidnight(now, station.timeZone)),
         range: String(ONE_WEEK_IN_HOURS),
     });
 
@@ -51,15 +52,49 @@ export async function getTideLevels(station: Station): Promise<TideLevel[]> {
     }
 
     return body.predictions.map((prediction) => ({
-        time: prediction.t,
+        // NOAA GMT times look like "2026-11-01 07:00"; make them ISO 8601 UTC.
+        time: `${prediction.t.replace(" ", "T")}:00Z`,
         height: Number(prediction.v),
     }));
 }
 
-// NOAA expects dates as YYYYMMDD.
+// NOAA (with time_zone=gmt) expects a UTC "YYYYMMDD HH:mm".
 function formatNoaaDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}${month}${day}`;
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const hours = String(date.getUTCHours()).padStart(2, "0");
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    return `${year}${month}${day} ${hours}:${minutes}`;
+}
+
+// The instant of midnight starting "today" in the given zone, independent of the server's zone.
+function stationMidnight(now: Date, timeZone: string): Date {
+    const today = wallClock(now, timeZone);
+    const midnightAsUtc = Date.UTC(today.year, today.month - 1, today.day);
+    // First pass uses today's offset; the second corrects it if midnight had a different offset (DST).
+    let midnight = midnightAsUtc - offsetMs(new Date(midnightAsUtc), timeZone);
+    midnight = midnightAsUtc - offsetMs(new Date(midnight), timeZone);
+    return new Date(midnight);
+}
+
+// The zone's UTC offset at an instant, e.g. -7h for PDT: local wall-clock time read as UTC, minus the instant.
+function offsetMs(date: Date, timeZone: string): number {
+    const local = wallClock(date, timeZone);
+    const localAsUtc = Date.UTC(local.year, local.month - 1, local.day, local.hour, local.minute);
+    return localAsUtc - Math.floor(date.getTime() / 60000) * 60000;
+}
+
+function wallClock(date: Date, timeZone: string) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        hourCycle: "h23",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+    }).formatToParts(date);
+    const part = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((p) => p.type === type)?.value);
+    return { year: part("year"), month: part("month"), day: part("day"), hour: part("hour"), minute: part("minute") };
 }

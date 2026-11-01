@@ -9,7 +9,7 @@ app.get("/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-app.get("/conditions/:zipCode", async (req: Request<{zipCode: string}>, res: Response) => {
+app.get("/api/conditions/:zipCode", async (req: Request<{zipCode: string}>, res: Response) => {
     res.json(await getConditions(req.params.zipCode));
 });
 

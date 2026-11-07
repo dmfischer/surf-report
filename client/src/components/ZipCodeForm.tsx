@@ -3,9 +3,10 @@ import { useState, type SubmitEvent } from 'react';
 interface ZipCodeFormProps {
   // Called with a validated 5-digit zip code when the form is submitted.
   onSubmit: (zipCode: string) => void;
+  isLoading: boolean;
 }
 
-function ZipCodeForm({ onSubmit }: ZipCodeFormProps) {
+function ZipCodeForm({ isLoading, onSubmit }: ZipCodeFormProps) {
   const [zipCode, setZipCode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -27,7 +28,7 @@ function ZipCodeForm({ onSubmit }: ZipCodeFormProps) {
         <label htmlFor="zip-code">Zip Code</label>
         <input id="zip-code" inputMode="numeric" value={zipCode}
           onChange={(event) => setZipCode(event.target.value)}></input>
-        <button type="submit">Get tide chart</button>
+        <button disabled={isLoading} type="submit">{isLoading ? 'Loading...' : 'Get tide chart'}</button>
       </form>
       {errorMessage && <p>{errorMessage}</p>}
     </>

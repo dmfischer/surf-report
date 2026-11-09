@@ -25,12 +25,25 @@ function ConditionsReport() {
     }
   }
 
+  // Decide what to show under the form. `station` is only set when status
+  // is 'ok', so checking it also narrows away the null for TypeScript.
+  let result = null;
+  if (response?.status === 'ok' && response.station) {
+    const { station, stationDistanceMiles } = response;
+    result = (
+      <p>
+        {station.name}, {station.state} ({stationDistanceMiles} mi away)
+      </p>
+    );
+  } else if (response) {
+    result = <p>{response.message}</p>;
+  }
+
   return (
     <>
       <ZipCodeForm isLoading={isLoading} onSubmit={handleZipCodeSubmit} />
       {errorMessage && <p>{errorMessage}</p>}
-      {response && <p>Chart for {response.zipCode}</p>}
-      {response && <pre>{JSON.stringify(response, null, 2)}</pre>}
+      {result}
     </>
   )
 }

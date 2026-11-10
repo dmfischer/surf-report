@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ZipCodeForm from './ZipCodeForm';
 import { getConditions } from '../services/conditions.service';
 import type { ConditionsResponse } from '../types/conditions';
+import TideChart from './TideChart';
 
 // Owns the conditions data for the page: the form reports a zip code up,
 // and results (the tide chart, later swell and wind) render below it.
@@ -44,6 +45,7 @@ function ConditionsReport() {
       <ZipCodeForm isLoading={isLoading} onSubmit={handleZipCodeSubmit} />
       {errorMessage && <p>{errorMessage}</p>}
       {result}
+      {response && <TideChart tideLevels={response.tideLevels} />}
     </>
   )
 }

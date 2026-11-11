@@ -32,9 +32,12 @@ function ConditionsReport() {
   if (response?.status === 'ok' && response.station) {
     const { station, stationDistanceMiles } = response;
     result = (
-      <p>
-        {station.name}, {station.state} ({stationDistanceMiles} mi away)
-      </p>
+      <>
+        <p>
+          {station.name}, {station.state} ({stationDistanceMiles} mi away)
+        </p>
+        <TideChart tideLevels={response.tideLevels} timeZone={station.timeZone} />
+      </>
     );
   } else if (response) {
     result = <p>{response.message}</p>;
@@ -45,7 +48,6 @@ function ConditionsReport() {
       <ZipCodeForm isLoading={isLoading} onSubmit={handleZipCodeSubmit} />
       {errorMessage && <p>{errorMessage}</p>}
       {result}
-      {response && <TideChart tideLevels={response.tideLevels} />}
     </>
   )
 }

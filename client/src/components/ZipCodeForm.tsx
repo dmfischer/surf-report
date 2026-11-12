@@ -24,13 +24,15 @@ function ZipCodeForm({ isLoading, onSubmit }: ZipCodeFormProps) {
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="zip-code">Zip Code</label>
-        <input id="zip-code" inputMode="numeric" value={zipCode}
-          onChange={(event) => setZipCode(event.target.value)}></input>
+      <form className="zip-form" onSubmit={handleSubmit}>
+        <div className="field">
+          <label htmlFor="zip-code">Zip Code</label>
+          <input id="zip-code" inputMode="numeric" value={zipCode}
+            onChange={(event) => setZipCode(event.target.value)}></input>
+        </div>
         <button disabled={isLoading} type="submit">{isLoading ? 'Loading...' : 'Get tide chart'}</button>
       </form>
-      {errorMessage && <p>{errorMessage}</p>}
+      {errorMessage && <p className="form-error">{errorMessage}</p>}
     </>
   )
 }

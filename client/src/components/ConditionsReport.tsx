@@ -32,21 +32,20 @@ function ConditionsReport() {
   if (response?.status === 'ok' && response.station) {
     const { station, stationDistanceMiles } = response;
     result = (
-      <>
-        <p>
-          {station.name}, {station.state} ({stationDistanceMiles} mi away)
-        </p>
+      <section className="card">
+        <h2 className="station-name">{station.name}, {station.state}</h2>
+        <p className="station-distance">{stationDistanceMiles} mi from {response.zipCode}</p>
         <TideChart tideLevels={response.tideLevels} timeZone={station.timeZone} />
-      </>
+      </section>
     );
   } else if (response) {
-    result = <p>{response.message}</p>;
+    result = <p className="card">{response.message}</p>;
   }
 
   return (
     <>
       <ZipCodeForm isLoading={isLoading} onSubmit={handleZipCodeSubmit} />
-      {errorMessage && <p>{errorMessage}</p>}
+      {errorMessage && <p className="form-error">{errorMessage}</p>}
       {result}
     </>
   )

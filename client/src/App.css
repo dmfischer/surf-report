@@ -1,0 +1,132 @@
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+h1 {
+  font-size: 2.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+/* Zip code form */
+
+.zip-form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.field input {
+  width: 9rem;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.field input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.zip-form button {
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--surface);
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.zip-form button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.zip-form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.form-error {
+  margin-top: 8px;
+  font-size: 0.875rem;
+  color: var(--error);
+}
+
+/* Results */
+
+.card {
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.station-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.station-distance {
+  font-size: 0.875rem;
+}
+
+/* Tide chart. Recharts draws SVG; these rules override its default colours. */
+
+.tide-chart {
+  margin-top: 16px;
+}
+
+.tide-chart .recharts-area-curve {
+  stroke: var(--accent);
+}
+
+.tide-chart .recharts-cartesian-grid line {
+  stroke: var(--border);
+}
+
+.tide-chart .recharts-cartesian-axis-line,
+.tide-chart .recharts-cartesian-axis-tick-line {
+  stroke: var(--border);
+}
+
+.tide-chart .recharts-cartesian-axis-tick-value {
+  fill: var(--text);
+  font-size: 12px;
+}
+
+.tide-chart .recharts-tooltip-cursor {
+  stroke: var(--text);
+}
+
+.tide-chart .recharts-active-dot circle {
+  fill: var(--accent);
+  stroke: var(--surface);
+}
+
+/* Recharts makes the chart focusable; hide the focus box drawn on click. */
+.tide-chart .recharts-surface:focus,
+.tide-chart .recharts-wrapper:focus {
+  outline: none;
+}

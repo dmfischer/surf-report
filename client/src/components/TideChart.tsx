@@ -1,4 +1,4 @@
-import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { TideLevel } from "../types/conditions";
 
 export interface TideChartProps {
@@ -28,28 +28,45 @@ function TideChart({ tideLevels, timeZone }: TideChartProps) {
         .filter((timestamp) => Number(hourFormat.format(timestamp)) === 0);
 
     return (
-        <>
-            <LineChart width={800} height={300} data={data} margin={{ top: 5, right: 50, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                    dataKey="timestamp"
-                    type="number"
-                    scale="time"
-                    domain={["dataMin", "dataMax"]}
-                    ticks={midnights}
-                    // Show every midnight. By default Recharts nudges the last
-                    // label inside the axis and hides any label it then overlaps.
-                    interval={0}
-                    tickFormatter={(timestamp: number) => dayFormat.format(timestamp)}
-                />
-                <YAxis />
-                <Tooltip
-                    labelFormatter={(timestamp) => fullFormat.format(timestamp as number)}
-                    formatter={(height) => [`${height} ft`, "Height"]}
-                />
-                <Line type="monotone" dataKey="height" dot={false} />
-            </LineChart>
-        </>
+        <div className="tide-chart">
+            <ResponsiveContainer width="100%" height={320}>
+                <AreaChart data={data} margin={{ top: 10, right: 40, bottom: 0, left: 0 }}>
+                    <defs>
+                        {/* Fill under the curve fades from the accent colour to transparent. */}
+                        <linearGradient id="tide-fill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" style={{ stopColor: "var(--accent)", stopOpacity: 0.35 }} />
+                            <stop offset="100%" style={{ stopColor: "var(--accent)", stopOpacity: 0.02 }} />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                        dataKey="timestamp"
+                        type="number"
+                        scale="time"
+                        domain={["dataMin", "dataMax"]}
+                        ticks={midnights}
+                        // Show every midnight. By default Recharts nudges the last
+                        // label inside the axis and hides any label it then overlaps.
+                        interval={0}
+                        tickFormatter={(timestamp: number) => dayFormat.format(timestamp)}
+                    />
+                    <YAxis unit=" ft" width={60} />
+                    <Tooltip
+                        labelFormatter={(timestamp) => fullFormat.format(timestamp as number)}
+                        formatter={(height) => [`${height} ft`, "Height"]}
+                        contentStyle={{
+                            background: "var(--surface)",
+                            border: "1px solid var(--border)",
+                            borderRadius: 8,
+                            boxShadow: "var(--shadow)",
+                        }}
+                        labelStyle={{ color: "var(--text-h)", fontWeight: 600 }}
+                        itemStyle={{ color: "var(--accent)" }}
+                    />
+                    <Area type="monotone" dataKey="height" strokeWidth={2} fill="url(#tide-fill)" />
+                </AreaChart>
+            </ResponsiveContainer>
+        </div>
     );
 }
 

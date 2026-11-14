@@ -130,3 +130,46 @@ h1 {
 .tide-chart .recharts-wrapper:focus {
   outline: none;
 }
+
+/* Station map */
+
+.station-map {
+  margin-top: 24px;
+}
+
+.station-map .maplibregl-map {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.map-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.map-dot--zip {
+  background: #e11d48;
+}
+
+.map-dot--station {
+  background: #0e7490;
+}
+
+.map-legend {
+  display: flex;
+  gap: 20px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.map-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

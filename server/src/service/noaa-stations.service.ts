@@ -1,5 +1,6 @@
 import tzlookup from "@photostructure/tz-lookup";
 import zipcodes, { ZipCode } from "zipcodes";
+import { LatLng } from "../model/lat-lng";
 import { Station } from "../model/station";
 import { haversineDistanceMiles } from "../util/haversine";
 
@@ -33,11 +34,13 @@ export function getStations(includeSubordinate?: boolean): Station[] {
 export const DEFAULT_MAX_STATION_DISTANCE_MILES = 50;
 
 export type StationLookup =
-    | { status: "ok"; station: Station; distanceMiles: number }
+    | { status: "ok"; zipLocation: LatLng; station: Station; distanceMiles: number }
     | { status: "unknown_zip" }
     | { status: "no_nearby_station" };
 
 interface NearestStation {
+    // Center of the zip code itself (from the zipcodes dataset), so callers can map it.
+    zipLocation: LatLng;
     station: Station;
     distanceMiles: number;
 }
@@ -65,7 +68,7 @@ export function findStation(
         for (const station of getStations()) {
             const distance = haversineDistanceMiles(lat, lng, station.lat, station.lng);
             if (!nearest || distance < nearest.distanceMiles) {
-                nearest = { station: station, distanceMiles: distance };
+                nearest = { zipLocation: { lat, lng }, station: station, distanceMiles: distance };
             }
         }
 
@@ -78,5 +81,10 @@ export function findStation(
         return { status: "no_nearby_station" };
     }
 
-    return { status: "ok", station: nearest.station, distanceMiles: nearest.distanceMiles };
+    return {
+        status: "ok",
+        zipLocation: nearest.zipLocation,
+        station: nearest.station,
+        distanceMiles: nearest.distanceMiles,
+    };
 }

@@ -19,6 +19,11 @@ export interface Station {
   timeZone: string
 }
 
+export interface LatLng {
+  lat: number
+  lng: number
+}
+
 export type ConditionsStatus = 'ok' | 'unknown_zip' | 'no_nearby_station'
 
 export interface ConditionsResponse {
@@ -27,6 +32,8 @@ export interface ConditionsResponse {
   // Human-readable explanation when status isn't 'ok'; null when it is.
   message: string | null
   description: string
+  // Center of the zip code; null unless status is 'ok'.
+  zipLocation: LatLng | null
   // null unless status is 'ok'.
   station: Station | null
   stationDistanceMiles: number | null

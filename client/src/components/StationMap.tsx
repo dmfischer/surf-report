@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { LatLng, WindForecast } from "../types/conditions";
 import { toCompass } from "../utils/direction";
 import { useShortestRotation } from "../hooks/useShortestRotation";
+import { windArrowSize } from "../utils/wind-arrow";
 
 // Free vector tiles from OpenFreeMap: no API key or account needed.
 const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
@@ -35,6 +36,8 @@ function StationMap({ zipCode, zipLocation, stationName, stationLocation, wind, 
     const direction = wind?.directionDeg ?? null;
     const arrowRotation = direction === null ? null : (direction + 180) % 360;
     const smoothRotation = useShortestRotation(arrowRotation);
+    const arrow = windArrowSize(wind?.speedMph ?? null, wind?.gustMph ?? null);
+    const arrowCenterX = arrow.headWidth / 2;
 
     const timeFormat = new Intl.DateTimeFormat("en-US", {
         timeZone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
@@ -67,15 +70,23 @@ function StationMap({ zipCode, zipLocation, stationName, stationLocation, wind, 
                 {arrowRotation !== null && (
                     <Marker longitude={zipLocation.lng} latitude={zipLocation.lat} anchor="bottom" style={{ zIndex: 1 }}>
                         {/* The SVG points north (up); CSS rotates it clockwise (see useShortestRotation). */}
+                        {/* Drawn in pixels (viewBox = width x height), tail at the bottom center.
+                            Length follows the speed, thickness the gusts (see windArrowSize). */}
                         <svg
                             className="wind-arrow"
-                            viewBox="0 0 24 56"
+                            width={arrow.headWidth}
+                            height={arrow.length}
+                            viewBox={`0 0 ${arrow.headWidth} ${arrow.length}`}
                             style={{ transform: `rotate(${smoothRotation}deg)` }}
                             aria-label={windCaption}
                         >
                             <title>{windCaption}</title>
-                            <line x1="12" y1="56" x2="12" y2="10" />
-                            <polygon points="12,2 21,16 3,16" />
+                            <line
+                                x1={arrowCenterX} y1={arrow.length}
+                                x2={arrowCenterX} y2={arrow.headLength}
+                                strokeWidth={arrow.stroke}
+                            />
+                            <polygon points={`${arrowCenterX},0 ${arrow.headWidth},${arrow.headLength} 0,${arrow.headLength}`} />
                         </svg>
                     </Marker>
                 )}

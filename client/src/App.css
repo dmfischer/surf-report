@@ -173,3 +173,32 @@ h1 {
   align-items: center;
   gap: 6px;
 }
+
+/* Wind arrow, centered on the zip code's dot and rotated by StationMap. */
+.wind-arrow {
+  display: block;
+  width: 24px;
+  height: 56px;
+  overflow: visible;
+  /* Light outline so the dark arrow stays visible over roads and labels. */
+  filter: drop-shadow(0 0 1.5px #ffffff) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  transition: transform 120ms ease-out;
+  transform-origin: 50% 100%;
+}
+
+.wind-arrow line {
+  stroke: #0f172a;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.wind-arrow polygon {
+  fill: #0f172a;
+}
+
+.wind-caption {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}

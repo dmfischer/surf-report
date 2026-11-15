@@ -65,6 +65,7 @@ function ConditionsReport() {
           zipLocation={zipLocation}
           stationName={station.name}
           stationLocation={{ lat: station.lat, lng: station.lng }}
+          buoy={response.buoy}
           wind={wind}
           isCurrentWind={hoveredTime === null}
           timeZone={station.timeZone}

@@ -3,6 +3,7 @@ import { DEFAULT_MAX_STATION_DISTANCE_MILES, findStation } from "./noaa-stations
 import { getTideLevels } from "./noaa-tides.service";
 import { getGridpointData } from "./nws-gridpoints.service";
 import { getWindForecast } from "./nws-wind.service";
+import { findBuoy } from "./ndbc-buoys.service";
 import { TideLevel } from "../model/tide-level";
 import { WindForecast } from "../model/wind-forecast";
 
@@ -23,9 +24,15 @@ export async function getConditions(zipCode: string): Promise<ConditionsResponse
             station: null,
             stationDistanceMiles: null,
             tideLevels: [],
+            buoy: null,
+            buoyDistanceMiles: null,
             windForecast: [],
         }
     }
+
+    // The nearest wave buoy, for swell (coming next). Wind deliberately stays at the zip code:
+    // what matters for surf is the wind at the shore, and a buoy can be miles out at sea.
+    const nearestBuoy = findBuoy(lookup.zipLocation);
 
     // NOAA (tides) and NWS (wind) are independent, so start both requests and wait for both,
     // instead of waiting for one to finish before starting the other.
@@ -44,6 +51,8 @@ export async function getConditions(zipCode: string): Promise<ConditionsResponse
         station: lookup.station,
         stationDistanceMiles: Math.round(lookup.distanceMiles * 10) / 10,
         tideLevels: tideLevels,
+        buoy: nearestBuoy?.buoy ?? null,
+        buoyDistanceMiles: nearestBuoy ? Math.round(nearestBuoy.distanceMiles * 10) / 10 : null,
         windForecast: trimToTideHours(windForecast, tideLevels),
     }
 }

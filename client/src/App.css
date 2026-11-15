@@ -159,6 +159,10 @@ h1 {
   background: #0e7490;
 }
 
+.map-dot--buoy {
+  background: #d97706;
+}
+
 .map-legend {
   display: flex;
   gap: 20px;

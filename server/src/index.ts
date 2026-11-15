@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import { getConditions } from "./service/noaa-conditions.service";
 import { loadStations } from "./service/noaa-stations.service";
+import { loadBuoys } from "./service/ndbc-buoys.service";
 
 const app = express();
 const PORT = 3001;
@@ -22,7 +23,8 @@ app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
 
 async function start() {
   // Load startup data before listen(), so no request can arrive before it's ready.
-  await loadStations();
+  // Both downloads are independent, so run them at the same time. loadBuoys never throws.
+  await Promise.all([loadStations(), loadBuoys()]);
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

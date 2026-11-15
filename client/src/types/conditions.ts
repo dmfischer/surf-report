@@ -29,6 +29,14 @@ export interface Station {
   timeZone: string
 }
 
+// An NDBC wave buoy.
+export interface Buoy {
+  id: string
+  name: string
+  lat: number
+  lng: number
+}
+
 export interface LatLng {
   lat: number
   lng: number
@@ -49,6 +57,9 @@ export interface ConditionsResponse {
   stationDistanceMiles: number | null
   // Empty unless status is 'ok'.
   tideLevels: TideLevel[]
+  // Nearest wave buoy within 50 miles; null if there's none (or status isn't 'ok').
+  buoy: Buoy | null
+  buoyDistanceMiles: number | null
   // Hourly, covering the same hours as tideLevels. Empty unless status is 'ok',
   // or if NWS has no forecast for this location.
   windForecast: WindForecast[]

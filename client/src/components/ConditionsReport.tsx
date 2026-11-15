@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ZipCodeForm from './ZipCodeForm';
 import { getConditions } from '../services/conditions.service';
+import { getSpotConditions, getSpots } from '../services/spots.service';
 import type { ConditionsResponse } from '../types/conditions';
+import type { SpotConditionsResponse, SpotsResponse } from '../types/spots';
+import { toCompass } from '../utils/direction';
+import SpotsMap from './SpotsMap';
 import TideChart from './TideChart';
 import StationMap from './StationMap';
 import SwellCaption from './SwellCaption';
@@ -22,6 +26,17 @@ function findHourAt<T extends { time: string }>(forecast: T[], timestamp: number
 function ConditionsReport() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // Spots near the searched zip, when there are any. Otherwise `response` holds the zip-based
+  // conditions (the fallback for zips with no spots defined yet).
+  const [spotsResponse, setSpotsResponse] = useState<SpotsResponse | null>(null);
+  const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
+  // Conditions for the selected spot, once loaded.
+  const [spotConditions, setSpotConditions] = useState<SpotConditionsResponse | null>(null);
+  const [isSpotLoading, setIsSpotLoading] = useState(false);
+  // The spot whose conditions we're waiting for. If the user clicks another spot before the first
+  // request finishes, the first answer must be ignored, or it could overwrite the second.
+  // A ref (not state) because changing it shouldn't re-render anything; it's only read in handlers.
+  const latestSpotRequest = useRef<string | null>(null);
   const [response, setResponse] = useState<ConditionsResponse | null>(null);
   // The time under the cursor on the tide chart (ms since 1970), or null when not hovering.
   // It lives here, in the parent, because siblings use it: TideChart sets it; StationMap and
@@ -35,13 +50,28 @@ function ConditionsReport() {
   async function handleZipCodeSubmit(zipCode: string) {
     setErrorMessage("");
     setHoveredTime(null);
+    setSelectedSpotId(null);
+    setSpotConditions(null);
+    setIsSpotLoading(false);
+    latestSpotRequest.current = null;
 
     setIsLoading(true);
     try {
-      setResponse(await getConditions(zipCode));
-      setLoadedAt(Date.now());
+      const spots = await getSpots(zipCode);
+      if (spots.status === 'ok' && spots.spots.length > 0) {
+        // Spots nearby: show them and let the user pick one.
+        setSpotsResponse(spots);
+        setResponse(null);
+      } else {
+        // Unknown zip, or no spots defined near it yet: fall back to the zip-based report,
+        // which also produces the "Unknown zip code" message.
+        setSpotsResponse(null);
+        setResponse(await getConditions(zipCode));
+        setLoadedAt(Date.now());
+      }
     } catch (error) {
       console.error(error);
+      setSpotsResponse(null);
       setResponse(null);
       setErrorMessage("Error loading conditions");
     } finally {
@@ -49,10 +79,83 @@ function ConditionsReport() {
     }
   }
 
+  async function handleSpotSelect(spotId: string) {
+    if (spotId === selectedSpotId) {
+      return; // already showing (or loading) this spot
+    }
+    setSelectedSpotId(spotId);
+    setHoveredTime(null);
+    setErrorMessage("");
+    setIsSpotLoading(true);
+    latestSpotRequest.current = spotId;
+
+    try {
+      const conditions = await getSpotConditions(spotId);
+      if (latestSpotRequest.current !== spotId) {
+        return; // the user picked another spot meanwhile; that request will set the state
+      }
+      setSpotConditions(conditions);
+      setLoadedAt(Date.now());
+    } catch (error) {
+      if (latestSpotRequest.current !== spotId) {
+        return;
+      }
+      console.error(error);
+      setSpotConditions(null);
+      setErrorMessage("Error loading conditions for this spot");
+    } finally {
+      if (latestSpotRequest.current === spotId) {
+        setIsSpotLoading(false);
+      }
+    }
+  }
+
   // Decide what to show under the form. `station` is only set when status
   // is 'ok', so checking it also narrows away the null for TypeScript.
   let result = null;
-  if (response?.status === 'ok' && response.station && response.zipLocation) {
+  if (spotsResponse?.zipLocation) {
+    const selectedSpot = spotsResponse.spots.find((spot) => spot.id === selectedSpotId);
+    // Only use conditions that belong to the selected spot (not the previous one while the next loads).
+    const conditions = spotConditions && spotConditions.spot.id === selectedSpotId ? spotConditions : null;
+    // Times are shown in the tide station's zone; without a station, fall back to the browser's.
+    const timeZone = conditions?.station?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const displayTime = hoveredTime ?? loadedAt;
+    const wind = conditions ? findHourAt(conditions.windForecast, displayTime) : undefined;
+    const swellForecast = conditions ? findHourAt(conditions.swellForecast, displayTime) : undefined;
+
+    let subtitle = "Select a spot to see its conditions";
+    if (selectedSpot) {
+      const details = `${selectedSpot.breakType} break, faces ${toCompass(selectedSpot.facingDeg)} (${selectedSpot.facingDeg}°)`;
+      subtitle = isSpotLoading ? `${details} · loading conditions…` : details;
+    }
+
+    // Each slot below is always present (as an element or `false`), so adding the chart doesn't shift
+    // the map's position among its siblings: React keeps the same map instead of rebuilding it.
+    result = (
+      <section className="card">
+        <h2 className="station-name">{selectedSpot ? selectedSpot.name : `Surf spots near ${spotsResponse.zipCode}`}</h2>
+        <p className="station-distance">{subtitle}</p>
+        {conditions && conditions.tideLevels.length > 0 && (
+          <TideChart tideLevels={conditions.tideLevels} timeZone={timeZone} onHoverTimeChange={setHoveredTime} />
+        )}
+        {conditions && <SwellCaption buoy={conditions.buoy} reading={conditions.swell} timeZone={timeZone} />}
+        <SpotsMap
+          key={spotsResponse.zipCode}
+          zipCode={spotsResponse.zipCode}
+          zipLocation={spotsResponse.zipLocation}
+          spots={spotsResponse.spots}
+          selectedSpotId={selectedSpotId}
+          onSelect={handleSpotSelect}
+          wind={wind}
+          isCurrentWind={hoveredTime === null}
+          timeZone={timeZone}
+        />
+        {conditions && (
+          <SwellForecastCaption forecast={swellForecast} isCurrent={hoveredTime === null} timeZone={timeZone} />
+        )}
+      </section>
+    );
+  } else if (response?.status === 'ok' && response.station && response.zipLocation) {
     const { station, stationDistanceMiles, zipLocation, zipCode } = response;
     // Not hovering: show the current hour, so the map and captions are useful without the mouse.
     const displayTime = hoveredTime ?? loadedAt;

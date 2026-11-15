@@ -198,6 +198,16 @@ h1 {
   fill: #0f172a;
 }
 
+.attribution {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.attribution a {
+  color: inherit;
+}
+
 .wind-caption,
 .swell-caption {
   margin: 6px 0 0;

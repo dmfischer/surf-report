@@ -5,8 +5,8 @@ import { getGridpointData } from "./nws-gridpoints.service";
 import { getWindForecast } from "./nws-wind.service";
 import { findBuoy } from "./ndbc-buoys.service";
 import { getLatestSwell } from "./ndbc-swell.service";
+import { getSwellForecast } from "./open-meteo-swell.service";
 import { TideLevel } from "../model/tide-level";
-import { WindForecast } from "../model/wind-forecast";
 
 export async function getConditions(zipCode: string): Promise<ConditionsResponse> {
     const lookup = findStation(zipCode);
@@ -29,6 +29,8 @@ export async function getConditions(zipCode: string): Promise<ConditionsResponse
             buoyDistanceMiles: null,
             windForecast: [],
             swell: null,
+            swellForecastLocation: null,
+            swellForecast: [],
         }
     }
 
@@ -36,12 +38,13 @@ export async function getConditions(zipCode: string): Promise<ConditionsResponse
     // what matters for surf is the wind at the shore, and a buoy can be miles out at sea.
     const nearestBuoy = findBuoy(lookup.zipLocation);
 
-    // NOAA (tides), NWS (wind) and NDBC (swell) are independent, so start all the requests and wait
-    // for all of them, instead of waiting for each to finish before starting the next.
-    const [tideLevels, gridData, swell] = await Promise.all([
+    // NOAA (tides), NWS (wind), NDBC (measured swell) and Open-Meteo (swell forecast) are independent,
+    // so start all the requests and wait for all of them, instead of one after another.
+    const [tideLevels, gridData, swell, swellForecast] = await Promise.all([
         getTideLevels(lookup.station),
         getGridpointData(lookup.zipLocation),
         nearestBuoy ? getLatestSwell(nearestBuoy.buoy) : null,
+        getSwellForecast(lookup.zipLocation),
     ]);
     const windForecast = gridData ? getWindForecast(gridData) : [];
 
@@ -58,23 +61,27 @@ export async function getConditions(zipCode: string): Promise<ConditionsResponse
         buoyDistanceMiles: nearestBuoy ? Math.round(nearestBuoy.distanceMiles * 10) / 10 : null,
         windForecast: trimToTideHours(windForecast, tideLevels),
         swell: swell,
+        swellForecastLocation: swellForecast?.location ?? null,
+        swellForecast: trimToTideHours(swellForecast?.forecast ?? [], tideLevels),
     }
 }
 
-// NWS forecasts start a few hours in the past and run about 8 days; keep only the hours the
-// tide chart shows, so both charts share an x-axis. Without tides, keep all the wind hours.
-function trimToTideHours(windForecast: WindForecast[], tideLevels: TideLevel[]): WindForecast[] {
+// Forecasts (wind from NWS, swell from Open-Meteo) start earlier and run longer than the tide chart;
+// keep only the hours the chart shows, so everything shares one x-axis. Without tides, keep them all.
+// Generic: <T extends { time: string }> means "a list of anything that has a time string", so the
+// same function works for WindForecast[] and SwellForecast[], and returns the same type it was given.
+function trimToTideHours<T extends { time: string }>(items: T[], tideLevels: TideLevel[]): T[] {
     const first = tideLevels[0];
     const last = tideLevels[tideLevels.length - 1];
     if (!first || !last) {
-        return windForecast;
+        return items;
     }
 
     // Compare as timestamps, not strings: tide times are "...T07:00:00Z", wind times "...T07:00:00.000Z".
     const start = Date.parse(first.time);
     const end = Date.parse(last.time);
-    return windForecast.filter((wind) => {
-        const time = Date.parse(wind.time);
+    return items.filter((item) => {
+        const time = Date.parse(item.time);
         return time >= start && time <= end;
     });
 }

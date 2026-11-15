@@ -5,9 +5,12 @@ export interface TideChartProps {
     tideLevels: TideLevel[];
     // IANA zone of the station, e.g. "America/New_York". Times are shown in it.
     timeZone: string;
+    // Called with the hovered point's timestamp (ms since 1970) as the cursor moves,
+    // and with null when the cursor leaves the chart.
+    onHoverTimeChange?: (timestamp: number | null) => void;
 }
 
-function TideChart({ tideLevels, timeZone }: TideChartProps) {
+function TideChart({ tideLevels, timeZone, onHoverTimeChange }: TideChartProps) {
     // Recharts can only space points by time if time is a number, so turn
     // each ISO string into milliseconds since 1970 (a "timestamp").
     const data = tideLevels.map((level) => ({
@@ -30,7 +33,17 @@ function TideChart({ tideLevels, timeZone }: TideChartProps) {
     return (
         <div className="tide-chart">
             <ResponsiveContainer width="100%" height={320}>
-                <AreaChart data={data} margin={{ top: 10, right: 40, bottom: 0, left: 0 }}>
+                <AreaChart
+                    data={data}
+                    margin={{ top: 10, right: 40, bottom: 0, left: 0 }}
+                    // Recharts tells us which data point is under the cursor (the same one the
+                    // tooltip shows) as an index into `data`; we pass that point's time up.
+                    onMouseMove={(state) => {
+                        const point = data[Number(state.activeTooltipIndex)];
+                        onHoverTimeChange?.(state.isTooltipActive && point ? point.timestamp : null);
+                    }}
+                    onMouseLeave={() => onHoverTimeChange?.(null)}
+                >
                     <defs>
                         {/* Fill under the curve fades from the accent colour to transparent. */}
                         <linearGradient id="tide-fill" x1="0" y1="0" x2="0" y2="1">

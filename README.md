@@ -1,13 +1,15 @@
 # Surf Report
 
-Look up surf conditions for a U.S. zip code: a week of hourly tides from the nearest NOAA tide station, an hourly wind forecast from the National Weather Service, and a map of where the data comes from. Gear recommendations and swell data are planned.
+Look up surf conditions for a U.S. zip code: a week of hourly tides from the nearest NOAA tide station, an hourly wind forecast from the National Weather Service, and a map showing the wind and where the data comes from. Swell data and gear recommendations are planned.
 
 ## Features
 
 - **Zip code lookup:** finds the nearest NOAA reference tide station within 50 miles.
 - **Tide chart:** hourly tide heights for the next 7 days, shown in the station's local time.
 - **Wind forecast:** hourly speed, gusts (mph) and direction from the NWS gridpoint forecast, covering the same hours as the tides.
-- **Station map:** shows the zip code's location, the tide station, and the distance between them.
+- **Station map:** shows the zip code's location, the tide station, and a wind arrow at the zip code.
+  - The arrow points the way the wind is blowing. Its length follows the wind speed and its thickness follows the gusts.
+  - It shows the current hour by default. Hover over the tide chart to see the wind at any hour, with a caption such as "8 mph from W (280°), gusts 17 mph".
 
 No API keys or accounts are needed: every data source is free and public.
 
@@ -90,8 +92,10 @@ server/                 Express 5 + TypeScript API
   src/service/          One file per data source (NOAA tides and stations, NWS forecasts)
   src/util/             Small pure helpers (distance, NWS time parsing)
 client/                 React 19 + Vite + TypeScript
-  src/components/       Zip form, tide chart (Recharts), station map (MapLibre)
+  src/components/       Zip form, tide chart (Recharts), station map with wind arrow (MapLibre)
+  src/hooks/            Custom React hooks (smooth arrow rotation)
   src/services/         Calls to the API
+  src/utils/            Small pure helpers (compass directions, wind arrow sizing)
 docs/research/          Notes on data sources (buoys, wind, maps, surf spots)
 ```
 
@@ -108,8 +112,7 @@ Tide predictions are not official navigation data. Don't rely on this app for sa
 
 ## Roadmap
 
-- Wind chart in the web app
-- Swell data from NDBC buoys
+- Swell data from NDBC buoys (next)
 - Surf spots with "is it working?" ratings from swell, wind and tide
 - Gear recommendations
 

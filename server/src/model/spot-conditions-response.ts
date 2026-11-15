@@ -1,4 +1,5 @@
 import { Buoy } from "./buoy";
+import { HourRating } from "./hour-rating";
 import { LatLng } from "./lat-lng";
 import { Spot } from "./spot";
 import { Station } from "./station";
@@ -23,4 +24,7 @@ export interface SpotConditionsResponse {
     // Open-Meteo's ocean grid cell nearest the spot, and its hourly forecast (same hours as tideLevels).
     swellForecastLocation: LatLng | null;
     swellForecast: SwellForecast[];
+    // One good/fair/poor rating per swellForecast hour, from swell (vs the spot's window) and wind
+    // (vs the way the spot faces). Tide isn't rated yet. Empty if there's no swell forecast.
+    ratings: HourRating[];
 }

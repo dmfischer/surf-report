@@ -29,6 +29,31 @@ export interface Station {
   timeZone: string
 }
 
+// One wave measurement from a buoy, split into swell and wind waves. null = not reported.
+export interface SwellReading {
+  // ISO 8601 instant in UTC, e.g. "2026-11-15T20:26:00.000Z".
+  time: string
+  // All waves combined (significant wave height), not surf face height.
+  waveHeightFt: number | null
+  swellHeightFt: number | null
+  swellPeriodS: number | null
+  // Compass point the swell comes FROM, e.g. "SW".
+  swellDirection: string | null
+  windWaveHeightFt: number | null
+  windWavePeriodS: number | null
+  windWaveDirection: string | null
+  // "SWELL" (clean), "AVERAGE", "STEEP" or "VERY_STEEP" (choppy).
+  steepness: string | null
+}
+
+// An NDBC wave buoy.
+export interface Buoy {
+  id: string
+  name: string
+  lat: number
+  lng: number
+}
+
 export interface LatLng {
   lat: number
   lng: number
@@ -49,7 +74,12 @@ export interface ConditionsResponse {
   stationDistanceMiles: number | null
   // Empty unless status is 'ok'.
   tideLevels: TideLevel[]
+  // Nearest wave buoy within 50 miles; null if there's none (or status isn't 'ok').
+  buoy: Buoy | null
+  buoyDistanceMiles: number | null
   // Hourly, covering the same hours as tideLevels. Empty unless status is 'ok',
   // or if NWS has no forecast for this location.
   windForecast: WindForecast[]
+  // The buoy's latest measured reading (not a forecast). null when there's no buoy or it isn't reporting.
+  swell: SwellReading | null
 }

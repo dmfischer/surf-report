@@ -3,6 +3,8 @@ import { DEFAULT_MAX_STATION_DISTANCE_MILES, findStation } from "./noaa-stations
 import { getTideLevels } from "./noaa-tides.service";
 import { getGridpointData } from "./nws-gridpoints.service";
 import { getWindForecast } from "./nws-wind.service";
+import { findBuoy } from "./ndbc-buoys.service";
+import { getLatestSwell } from "./ndbc-swell.service";
 import { TideLevel } from "../model/tide-level";
 import { WindForecast } from "../model/wind-forecast";
 
@@ -23,15 +25,23 @@ export async function getConditions(zipCode: string): Promise<ConditionsResponse
             station: null,
             stationDistanceMiles: null,
             tideLevels: [],
+            buoy: null,
+            buoyDistanceMiles: null,
             windForecast: [],
+            swell: null,
         }
     }
 
-    // NOAA (tides) and NWS (wind) are independent, so start both requests and wait for both,
-    // instead of waiting for one to finish before starting the other.
-    const [tideLevels, gridData] = await Promise.all([
+    // The nearest wave buoy, for swell. Wind deliberately stays at the zip code:
+    // what matters for surf is the wind at the shore, and a buoy can be miles out at sea.
+    const nearestBuoy = findBuoy(lookup.zipLocation);
+
+    // NOAA (tides), NWS (wind) and NDBC (swell) are independent, so start all the requests and wait
+    // for all of them, instead of waiting for each to finish before starting the next.
+    const [tideLevels, gridData, swell] = await Promise.all([
         getTideLevels(lookup.station),
         getGridpointData(lookup.zipLocation),
+        nearestBuoy ? getLatestSwell(nearestBuoy.buoy) : null,
     ]);
     const windForecast = gridData ? getWindForecast(gridData) : [];
 
@@ -44,7 +54,10 @@ export async function getConditions(zipCode: string): Promise<ConditionsResponse
         station: lookup.station,
         stationDistanceMiles: Math.round(lookup.distanceMiles * 10) / 10,
         tideLevels: tideLevels,
+        buoy: nearestBuoy?.buoy ?? null,
+        buoyDistanceMiles: nearestBuoy ? Math.round(nearestBuoy.distanceMiles * 10) / 10 : null,
         windForecast: trimToTideHours(windForecast, tideLevels),
+        swell: swell,
     }
 }
 

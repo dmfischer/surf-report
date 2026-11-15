@@ -2,7 +2,7 @@ import { Map, Marker, NavigationControl } from "@vis.gl/react-maplibre";
 // MapLibre positions its canvas, controls and markers with this stylesheet;
 // without it the map renders but markers and attribution end up in the wrong place.
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { LatLng, WindForecast } from "../types/conditions";
+import type { Buoy, LatLng, WindForecast } from "../types/conditions";
 import { toCompass } from "../utils/direction";
 import { useShortestRotation } from "../hooks/useShortestRotation";
 import { windArrowSize } from "../utils/wind-arrow";
@@ -15,6 +15,8 @@ export interface StationMapProps {
     zipLocation: LatLng;
     stationName: string;
     stationLocation: LatLng;
+    // Nearest wave buoy, shown as its own dot; null if there's none nearby.
+    buoy: Buoy | null;
     // Wind to draw at the zip location; undefined hides the arrow (no forecast for that hour).
     wind: WindForecast | undefined;
     // true when `wind` is the current hour rather than a time hovered on the tide chart.
@@ -23,12 +25,17 @@ export interface StationMapProps {
     timeZone: string;
 }
 
-function StationMap({ zipCode, zipLocation, stationName, stationLocation, wind, isCurrentWind, timeZone }: StationMapProps) {
-    // The smallest box containing both points, as [[west, south], [east, north]].
+function StationMap({
+    zipCode, zipLocation, stationName, stationLocation, buoy, wind, isCurrentWind, timeZone,
+}: StationMapProps) {
+    // The smallest box containing all the points, as [[west, south], [east, north]].
     // MapLibre (like GeoJSON) orders coordinates as [lng, lat], the reverse of how we usually say them.
+    const points = buoy ? [zipLocation, stationLocation, buoy] : [zipLocation, stationLocation];
+    const lngs = points.map((point) => point.lng);
+    const lats = points.map((point) => point.lat);
     const bounds: [[number, number], [number, number]] = [
-        [Math.min(zipLocation.lng, stationLocation.lng), Math.min(zipLocation.lat, stationLocation.lat)],
-        [Math.max(zipLocation.lng, stationLocation.lng), Math.max(zipLocation.lat, stationLocation.lat)],
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
     ];
 
     // directionDeg is where the wind comes FROM. Weather maps point arrows the way the wind
@@ -96,10 +103,16 @@ function StationMap({ zipCode, zipLocation, stationName, stationLocation, wind, 
                 <Marker longitude={stationLocation.lng} latitude={stationLocation.lat} style={{ zIndex: 2 }}>
                     <div className="map-dot map-dot--station" title={`Tide station: ${stationName}`} />
                 </Marker>
+                {buoy && (
+                    <Marker longitude={buoy.lng} latitude={buoy.lat} style={{ zIndex: 2 }}>
+                        <div className="map-dot map-dot--buoy" title={`Buoy ${buoy.id}: ${buoy.name}`} />
+                    </Marker>
+                )}
             </Map>
             <ul className="map-legend">
                 <li><span className="map-dot map-dot--zip" /> Zip code {zipCode}</li>
                 <li><span className="map-dot map-dot--station" /> Tide station</li>
+                {buoy && <li><span className="map-dot map-dot--buoy" /> Buoy {buoy.id}</li>}
             </ul>
             {/* aria-live: screen readers announce the new wind as the chart is hovered. */}
             <p className="wind-caption" aria-live="polite">{windCaption}</p>

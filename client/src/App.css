@@ -159,6 +159,10 @@ h1 {
   background: #0e7490;
 }
 
+.map-dot--buoy {
+  background: #d97706;
+}
+
 .map-legend {
   display: flex;
   gap: 20px;
@@ -194,7 +198,8 @@ h1 {
   fill: #0f172a;
 }
 
-.wind-caption {
+.wind-caption,
+.swell-caption {
   margin: 6px 0 0;
   font-size: 0.875rem;
   color: var(--text-h);

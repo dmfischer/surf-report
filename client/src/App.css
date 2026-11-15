@@ -285,6 +285,66 @@ h1 {
   fill: #0f172a;
 }
 
+/* Rating bands behind the tide curve. Recharts draws each as a <path class="recharts-reference-area-rect">
+   inside a <g> carrying our className; CSS (unlike an SVG fill attribute) can use the theme variables. */
+.rating-band .recharts-reference-area-rect {
+  stroke: none;
+  fill-opacity: 0.16;
+}
+
+.rating-band--good .recharts-reference-area-rect { fill: var(--rating-good); }
+.rating-band--fair .recharts-reference-area-rect { fill: var(--rating-fair); }
+.rating-band--poor .recharts-reference-area-rect { fill: var(--rating-poor); }
+
+.rating-caption p {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-h);
+}
+
+.rating-chip {
+  display: inline-block;
+  padding: 0 8px;
+  font-weight: 600;
+  color: #ffffff;
+  border-radius: 999px;
+}
+
+.rating-chip--good { background: var(--rating-good); }
+.rating-chip--fair { background: var(--rating-fair); color: #0f172a; }
+.rating-chip--poor { background: var(--rating-poor); }
+
+.rating-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+}
+
+.rating-key li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rating-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  opacity: 0.6;
+}
+
+.rating-swatch--good { background: var(--rating-good); }
+.rating-swatch--fair { background: var(--rating-fair); }
+.rating-swatch--poor { background: var(--rating-poor); }
+
+.rating-key-note {
+  color: var(--text);
+}
+
 .attribution {
   margin: 2px 0 0;
   font-size: 0.75rem;

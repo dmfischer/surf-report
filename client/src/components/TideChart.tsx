@@ -1,5 +1,6 @@
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { TideLevel } from "../types/conditions";
+import type { RatingBand } from "../utils/rating-bands";
 
 export interface TideChartProps {
     tideLevels: TideLevel[];
@@ -8,9 +9,11 @@ export interface TideChartProps {
     // Called with the hovered point's timestamp (ms since 1970) as the cursor moves,
     // and with null when the cursor leaves the chart.
     onHoverTimeChange?: (timestamp: number | null) => void;
+    // Optional coloured background bands (good / fair / poor) behind the tide curve.
+    ratingBands?: RatingBand[];
 }
 
-function TideChart({ tideLevels, timeZone, onHoverTimeChange }: TideChartProps) {
+function TideChart({ tideLevels, timeZone, onHoverTimeChange, ratingBands = [] }: TideChartProps) {
     // Recharts can only space points by time if time is a number, so turn
     // each ISO string into milliseconds since 1970 (a "timestamp").
     const data = tideLevels.map((level) => ({
@@ -51,6 +54,17 @@ function TideChart({ tideLevels, timeZone, onHoverTimeChange }: TideChartProps) 
                             <stop offset="100%" style={{ stopColor: "var(--accent)", stopOpacity: 0.02 }} />
                         </linearGradient>
                     </defs>
+                    {/* Drawn first, so they sit behind the grid and the tide curve. No y1/y2 means the full
+                        height. ifOverflow="hidden" clips the last band, which ends an hour after the data. */}
+                    {ratingBands.map((band) => (
+                        <ReferenceArea
+                            key={band.start}
+                            x1={band.start}
+                            x2={band.end}
+                            ifOverflow="hidden"
+                            className={`rating-band rating-band--${band.rating}`}
+                        />
+                    ))}
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
                         dataKey="timestamp"

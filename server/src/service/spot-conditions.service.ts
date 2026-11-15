@@ -1,6 +1,7 @@
 import { Spot } from "../model/spot";
 import { SpotConditionsResponse } from "../model/spot-conditions-response";
 import { trimToTideHours } from "../util/forecast-window";
+import { rateHours } from "../util/rating";
 import { getBuoy } from "./ndbc-buoys.service";
 import { getLatestSwell } from "./ndbc-swell.service";
 import { DEFAULT_MAX_STATION_DISTANCE_MILES, findNearestStation } from "./noaa-stations.service";
@@ -31,17 +32,19 @@ export async function getSpotConditions(spot: Spot): Promise<SpotConditionsRespo
         buoy ? getLatestSwell(buoy) : null,
         getSwellForecast(location),
     ]);
-    const windForecast = gridData ? getWindForecast(gridData) : [];
+    const windHours = trimToTideHours(gridData ? getWindForecast(gridData) : [], tideLevels);
+    const swellHours = trimToTideHours(swellForecast?.forecast ?? [], tideLevels);
 
     return {
         spot,
         station,
         stationDistanceMiles: station && nearest ? Math.round(nearest.distanceMiles * 10) / 10 : null,
         tideLevels,
-        windForecast: trimToTideHours(windForecast, tideLevels),
+        windForecast: windHours,
         buoy,
         swell,
         swellForecastLocation: swellForecast?.location ?? null,
-        swellForecast: trimToTideHours(swellForecast?.forecast ?? [], tideLevels),
+        swellForecast: swellHours,
+        ratings: rateHours(spot, swellHours, windHours),
     };
 }

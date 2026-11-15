@@ -46,4 +46,21 @@ export interface SpotConditionsResponse {
   // Open-Meteo's ocean cell nearest the spot, and its hourly forecast (same hours as tideLevels).
   swellForecastLocation: LatLng | null
   swellForecast: SwellForecast[]
+  // One rating per swellForecast hour (swell vs the spot's window, wind vs the way it faces).
+  ratings: HourRating[]
+}
+
+export type Rating = 'good' | 'fair' | 'poor'
+
+// How surfable a spot is likely to be in one hour (green / yellow / red).
+export interface HourRating {
+  // ISO 8601 instant in UTC.
+  time: string
+  // The worst of the swell and wind ratings.
+  rating: Rating
+  swellRating: Rating
+  // null when there's no wind forecast for this hour.
+  windRating: Rating | null
+  // e.g. "Swell 3.3 ft @ 11 s from S (in window)", "Wind 8 mph from NW (offshore)".
+  reasons: string[]
 }

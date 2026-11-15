@@ -5,6 +5,8 @@ import { getSpotConditions, getSpots } from '../services/spots.service';
 import type { ConditionsResponse } from '../types/conditions';
 import type { SpotConditionsResponse, SpotsResponse } from '../types/spots';
 import { toCompass } from '../utils/direction';
+import { toRatingBands } from '../utils/rating-bands';
+import RatingCaption from './RatingCaption';
 import SpotsMap from './SpotsMap';
 import TideChart from './TideChart';
 import StationMap from './StationMap';
@@ -122,6 +124,7 @@ function ConditionsReport() {
     const displayTime = hoveredTime ?? loadedAt;
     const wind = conditions ? findHourAt(conditions.windForecast, displayTime) : undefined;
     const swellForecast = conditions ? findHourAt(conditions.swellForecast, displayTime) : undefined;
+    const rating = conditions ? findHourAt(conditions.ratings, displayTime) : undefined;
 
     let subtitle = "Select a spot to see its conditions";
     if (selectedSpot) {
@@ -136,8 +139,14 @@ function ConditionsReport() {
         <h2 className="station-name">{selectedSpot ? selectedSpot.name : `Surf spots near ${spotsResponse.zipCode}`}</h2>
         <p className="station-distance">{subtitle}</p>
         {conditions && conditions.tideLevels.length > 0 && (
-          <TideChart tideLevels={conditions.tideLevels} timeZone={timeZone} onHoverTimeChange={setHoveredTime} />
+          <TideChart
+            tideLevels={conditions.tideLevels}
+            timeZone={timeZone}
+            onHoverTimeChange={setHoveredTime}
+            ratingBands={toRatingBands(conditions.ratings)}
+          />
         )}
+        {conditions && <RatingCaption rating={rating} isCurrent={hoveredTime === null} timeZone={timeZone} />}
         {conditions && <SwellCaption buoy={conditions.buoy} reading={conditions.swell} timeZone={timeZone} />}
         <SpotsMap
           key={spotsResponse.zipCode}

@@ -1,6 +1,7 @@
 import { Buoy } from "./buoy";
 import { LatLng } from "./lat-lng";
 import { Station } from "./station";
+import { SwellReading } from "./swell-reading";
 import { TideLevel } from "./tide-level";
 import { WindForecast } from "./wind-forecast";
 
@@ -20,4 +21,6 @@ export interface ConditionsResponse {
     // Hourly, covering the same hours as tideLevels (all available hours if there are no tides).
     // Empty unless status is "ok", or if NWS has no forecast for this location.
     windForecast: WindForecast[];
+    // The buoy's latest measured reading (not a forecast). null when there's no buoy or it isn't reporting.
+    swell: SwellReading | null;
 }

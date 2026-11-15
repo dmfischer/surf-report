@@ -4,6 +4,7 @@ import { getConditions } from '../services/conditions.service';
 import type { ConditionsResponse, WindForecast } from '../types/conditions';
 import TideChart from './TideChart';
 import StationMap from './StationMap';
+import SwellCaption from './SwellCaption';
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -70,6 +71,7 @@ function ConditionsReport() {
           isCurrentWind={hoveredTime === null}
           timeZone={station.timeZone}
         />
+        <SwellCaption buoy={response.buoy} reading={response.swell} timeZone={station.timeZone} />
       </section>
     );
   } else if (response) {

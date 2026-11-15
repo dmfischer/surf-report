@@ -1,5 +1,57 @@
 import { describe, expect, it } from "vitest";
-import { parseActiveStations, parseSpecFileIds } from "./ndbc";
+import { parseActiveStations, parseSpecFileIds, parseSpecReadings } from "./ndbc";
+
+const SPEC_HEADER = `#YY  MM DD hh mm WVHT  SwH  SwP  WWH  WWP SwD WWD  STEEPNESS  APD MWD
+#yr  mo dy hr mn    m    m  sec    m  sec  -  degT     -      sec degT`;
+
+describe("parseSpecReadings", () => {
+    it("parses a row into a reading, converting metres to feet", () => {
+        const text = `${SPEC_HEADER}
+2026 11 15 20 26  1.4  1.2 16.7  0.7  9.9  SW  SW      SWELL 10.5 217
+`;
+
+        expect(parseSpecReadings(text)).toEqual([{
+            time: "2026-11-15T20:26:00.000Z",
+            waveHeightFt: 4.6,
+            swellHeightFt: 3.9,
+            swellPeriodS: 16.7,
+            swellDirection: "SW",
+            windWaveHeightFt: 2.3,
+            windWavePeriodS: 9.9,
+            windWaveDirection: "SW",
+            steepness: "SWELL",
+        }]);
+    });
+
+    it("turns MM, -99 and N/A into null", () => {
+        const text = `${SPEC_HEADER}
+2026 11 01 19 10  0.2   MM   MM   MM   MM  MM  MM        N/A  2.4 -99`;
+
+        expect(parseSpecReadings(text)[0]).toMatchObject({
+            waveHeightFt: 0.7,
+            swellHeightFt: null,
+            swellPeriodS: null,
+            swellDirection: null,
+            steepness: null,
+        });
+    });
+
+    it("skips rows with no total wave height, and keeps the file's newest-first order", () => {
+        const text = `${SPEC_HEADER}
+2026 11 15 21 00   MM   MM   MM   MM   MM  MM  MM         MM   MM  MM
+2026 11 15 20 30  0.8  0.1 11.8  0.8  3.1 SSE  NW VERY_STEEP  3.1 313
+2026 11 15 20 00  0.8  0.1 11.8  0.8  3.1  SE  NW VERY_STEEP  3.1 308`;
+
+        expect(parseSpecReadings(text).map((reading) => reading.time)).toEqual([
+            "2026-11-15T20:30:00.000Z",
+            "2026-11-15T20:00:00.000Z",
+        ]);
+    });
+
+    it("throws when the header line is missing", () => {
+        expect(() => parseSpecReadings("<html>Not found</html>")).toThrow();
+    });
+});
 
 describe("parseActiveStations", () => {
     it("reads id, name and coordinates from each station tag", () => {

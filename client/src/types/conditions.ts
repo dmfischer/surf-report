@@ -46,6 +46,25 @@ export interface SwellReading {
   steepness: string | null
 }
 
+// One group of waves travelling together: a swell, or the local wind chop.
+export interface WaveComponent {
+  heightFt: number
+  periodS: number | null
+  // Direction the waves come FROM, in degrees: 0 = north, 90 = east.
+  directionDeg: number | null
+}
+
+// One hour of swell forecast (Open-Meteo). Model output for open water near the coast,
+// not surf height at the beach. A component is null when the model has no value.
+export interface SwellForecast {
+  // ISO 8601 instant in UTC, e.g. "2026-11-15T08:00:00Z".
+  time: string
+  waveHeightFt: number | null
+  primarySwell: WaveComponent | null
+  secondarySwell: WaveComponent | null
+  windWaves: WaveComponent | null
+}
+
 // An NDBC wave buoy.
 export interface Buoy {
   id: string
@@ -82,4 +101,8 @@ export interface ConditionsResponse {
   windForecast: WindForecast[]
   // The buoy's latest measured reading (not a forecast). null when there's no buoy or it isn't reporting.
   swell: SwellReading | null
+  // Open-Meteo's ocean grid cell nearest the zip code: where swellForecast is for.
+  swellForecastLocation: LatLng | null
+  // Hourly, covering the same hours as tideLevels. Empty if Open-Meteo is unavailable.
+  swellForecast: SwellForecast[]
 }

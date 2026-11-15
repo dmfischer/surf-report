@@ -62,17 +62,10 @@ export function findStation(
             return { status: "unknown_zip" };
         }
 
-        const lat = foundZipCode.latitude;
-        const lng = foundZipCode.longitude;
-
-        for (const station of getStations()) {
-            const distance = haversineDistanceMiles(lat, lng, station.lat, station.lng);
-            if (!nearest || distance < nearest.distanceMiles) {
-                nearest = { zipLocation: { lat, lng }, station: station, distanceMiles: distance };
-            }
-        }
-
-        if (nearest) {
+        const zipLocation = { lat: foundZipCode.latitude, lng: foundZipCode.longitude };
+        const found = findNearestStation(zipLocation);
+        if (found) {
+            nearest = { zipLocation, ...found };
             stationCache.set(zipCode, nearest);
         }
     }
@@ -87,4 +80,17 @@ export function findStation(
         station: nearest.station,
         distanceMiles: nearest.distanceMiles,
     };
+}
+
+// The nearest reference station to any point, regardless of distance (callers apply their own limit),
+// or null if no stations are loaded. Used for zip codes above and for surf spots.
+export function findNearestStation(location: LatLng): { station: Station; distanceMiles: number } | null {
+    let nearest: { station: Station; distanceMiles: number } | null = null;
+    for (const station of getStations()) {
+        const distanceMiles = haversineDistanceMiles(location.lat, location.lng, station.lat, station.lng);
+        if (!nearest || distanceMiles < nearest.distanceMiles) {
+            nearest = { station, distanceMiles };
+        }
+    }
+    return nearest;
 }

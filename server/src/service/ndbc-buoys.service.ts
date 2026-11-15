@@ -53,6 +53,12 @@ export function findBuoy(location: LatLng, maxDistanceMiles: number = DEFAULT_MA
     return nearest && nearest.distanceMiles <= maxDistanceMiles ? nearest : null;
 }
 
+// A loaded wave buoy by id (e.g. a spot's buoyId), or undefined if it isn't in the list
+// (unknown id, not reporting waves, or buoys failed to load).
+export function getBuoy(id: string): Buoy | undefined {
+    return buoys.find((buoy) => buoy.id.toUpperCase() === id.toUpperCase());
+}
+
 async function fetchText(url: string): Promise<string> {
     const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     if (!response.ok) {

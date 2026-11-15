@@ -3,9 +3,8 @@ import { Map, Marker, NavigationControl } from "@vis.gl/react-maplibre";
 // without it the map renders but markers and attribution end up in the wrong place.
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Buoy, LatLng, WindForecast } from "../types/conditions";
-import { toCompass } from "../utils/direction";
-import { useShortestRotation } from "../hooks/useShortestRotation";
-import { windArrowSize } from "../utils/wind-arrow";
+import { describeWind } from "../utils/wind-caption";
+import WindArrowMarker from "./WindArrowMarker";
 
 // Free vector tiles from OpenFreeMap: no API key or account needed.
 const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
@@ -38,24 +37,7 @@ function StationMap({
         [Math.max(...lngs), Math.max(...lats)],
     ];
 
-    // directionDeg is where the wind comes FROM. Weather maps point arrows the way the wind
-    // is blowing, so turn it around: a west wind (270°) blows toward the east (90°).
-    const direction = wind?.directionDeg ?? null;
-    const arrowRotation = direction === null ? null : (direction + 180) % 360;
-    const smoothRotation = useShortestRotation(arrowRotation);
-    const arrow = windArrowSize(wind?.speedMph ?? null, wind?.gustMph ?? null);
-    const arrowCenterX = arrow.headWidth / 2;
-
-    const timeFormat = new Intl.DateTimeFormat("en-US", {
-        timeZone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-    });
-    const windWhen = isCurrentWind ? "now" : wind ? timeFormat.format(Date.parse(wind.time)) : "";
-    let windCaption = "No wind forecast for this hour";
-    if (wind && wind.speedMph !== null) {
-        const from = direction === null ? "" : ` from ${toCompass(direction)} (${direction}°)`;
-        const gusts = wind.gustMph === null ? "" : `, gusts ${wind.gustMph} mph`;
-        windCaption = `Wind ${windWhen}: ${wind.speedMph} mph${from}${gusts}`;
-    }
+    const windCaption = describeWind(wind, isCurrentWind, timeZone);
 
     return (
         <div className="station-map">
@@ -72,31 +54,7 @@ function StationMap({
                 style={{ width: "100%", height: 360 }}
             >
                 <NavigationControl position="top-right" showCompass={false} />
-                {/* zIndex: markers otherwise stack in the order they were added, and this one comes
-                    and goes, so it could end up on top. The dots (2) always cover the arrow's tail (1). */}
-                {arrowRotation !== null && (
-                    <Marker longitude={zipLocation.lng} latitude={zipLocation.lat} anchor="bottom" style={{ zIndex: 1 }}>
-                        {/* The SVG points north (up); CSS rotates it clockwise (see useShortestRotation). */}
-                        {/* Drawn in pixels (viewBox = width x height), tail at the bottom center.
-                            Length follows the speed, thickness the gusts (see windArrowSize). */}
-                        <svg
-                            className="wind-arrow"
-                            width={arrow.headWidth}
-                            height={arrow.length}
-                            viewBox={`0 0 ${arrow.headWidth} ${arrow.length}`}
-                            style={{ transform: `rotate(${smoothRotation}deg)` }}
-                            aria-label={windCaption}
-                        >
-                            <title>{windCaption}</title>
-                            <line
-                                x1={arrowCenterX} y1={arrow.length}
-                                x2={arrowCenterX} y2={arrow.headLength}
-                                strokeWidth={arrow.stroke}
-                            />
-                            <polygon points={`${arrowCenterX},0 ${arrow.headWidth},${arrow.headLength} 0,${arrow.headLength}`} />
-                        </svg>
-                    </Marker>
-                )}
+                <WindArrowMarker location={zipLocation} wind={wind} label={windCaption} />
                 <Marker longitude={zipLocation.lng} latitude={zipLocation.lat} style={{ zIndex: 2 }}>
                     <div className="map-dot map-dot--zip" title={`Zip code ${zipCode}`} />
                 </Marker>

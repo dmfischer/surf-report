@@ -8,6 +8,11 @@ const SWELL_POOR_BELOW_FT = 1.5;
 const SWELL_GOOD_FROM_FT = 3;
 const PERIOD_POOR_BELOW_S = 6;
 const PERIOD_GOOD_FROM_S = 9;
+// Size makes up for period: a big, mid-period swell (e.g. 7 ft @ 8 s after a storm) is good too.
+// Tuned 2026-11-23, when Monahan's Dock and Town Beach were good on ~7 ft @ 8 s SSE (Open-Meteo)
+// and the 9 s rule alone rated them fair.
+const BIG_SWELL_GOOD_FROM_FT = 5;
+const BIG_SWELL_PERIOD_GOOD_FROM_S = 7;
 const WIND_LIGHT_BELOW_MPH = 6; // any direction is fine when it's this light
 const WIND_ONSHORE_POOR_ABOVE_MPH = 12;
 // Wind within 45° of straight offshore counts as offshore, within 45° of straight onshore as onshore,
@@ -67,6 +72,9 @@ function rateSwellComponent(spot: Spot, swell: WaveComponent): { rating: Rating;
     const periodS = swell.periodS ?? 0;
     if (swell.heightFt < SWELL_POOR_BELOW_FT || periodS < PERIOD_POOR_BELOW_S) {
         return { rating: "poor", reason: `${description} (too small or short)` };
+    }
+    if (swell.heightFt >= BIG_SWELL_GOOD_FROM_FT && periodS >= BIG_SWELL_PERIOD_GOOD_FROM_S) {
+        return { rating: "good", reason: `${description} (big, in window)` };
     }
     if (swell.heightFt < SWELL_GOOD_FROM_FT || periodS < PERIOD_GOOD_FROM_S) {
         return { rating: "fair", reason: `${description} (small or short period)` };

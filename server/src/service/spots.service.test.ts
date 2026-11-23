@@ -10,7 +10,7 @@ describe("findSpotsNear", () => {
         expect(result.status).toBe("ok");
         expect(result.zipLocation).not.toBeNull();
         expect(result.spots.map((spot) => spot.id).sort()).toEqual(
-            ["matunuck", "narragansett-town-beach", "point-judith", "scarborough"],
+            ["matunuck", "monahans-dock", "narragansett-town-beach", "point-judith", "scarborough"],
         );
         const distances = result.spots.map((spot) => spot.distanceMiles);
         expect(distances).toEqual([...distances].sort((a, b) => a - b));

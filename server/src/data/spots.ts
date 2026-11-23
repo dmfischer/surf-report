@@ -25,6 +25,19 @@ export const SPOTS: Spot[] = [
         buoyId: "44097",
     },
     {
+        // Rock reef at State Pier 5 / Monahan's Clam Shack (190 Ocean Rd, OSM), just south of the Town Beach.
+        // facingDeg measured from OSM coastline within 300-700 m (74-82°). Window is an estimate.
+        id: "monahans-dock",
+        name: "Monahan's Dock",
+        lat: 41.4222,
+        lng: -71.455,
+        breakType: "reef",
+        facingDeg: 80,
+        swellWindowMinDeg: 80,
+        swellWindowMaxDeg: 200,
+        buoyId: "44097",
+    },
+    {
         id: "scarborough",
         name: "Scarborough State Beach",
         lat: 41.3877,

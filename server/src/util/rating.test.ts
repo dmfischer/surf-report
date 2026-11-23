@@ -27,6 +27,8 @@ describe("rateHour: swell", () => {
         { name: "good: big, long period, in window", swell: goodSwell, expected: "good" },
         { name: "fair: in window but small", swell: { heightFt: 2, periodS: 12, directionDeg: 170 }, expected: "fair" },
         { name: "fair: in window but short period", swell: { heightFt: 4, periodS: 7, directionDeg: 170 }, expected: "fair" },
+        { name: "good: big enough to make up for a mid period", swell: { heightFt: 7, periodS: 8, directionDeg: 160 }, expected: "good" },
+        { name: "fair: big but short period", swell: { heightFt: 7, periodS: 6, directionDeg: 160 }, expected: "fair" },
         { name: "poor: too small", swell: { heightFt: 1, periodS: 12, directionDeg: 170 }, expected: "poor" },
         { name: "poor: wind chop period", swell: { heightFt: 4, periodS: 4, directionDeg: 170 }, expected: "poor" },
         { name: "poor: outside the window (from the west)", swell: { heightFt: 6, periodS: 14, directionDeg: 270 }, expected: "poor" },

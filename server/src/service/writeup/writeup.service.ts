@@ -5,6 +5,7 @@ import { Writeup, WriteupDay } from "../../model/writeup";
 // Shared with the prompt and the validation, so a great day doesn't turn into a list of every block.
 import { buildWriteupUserMessage, MAX_BEST_BETS_PER_DAY, WRITEUP_SYSTEM_PROMPT } from "../../util/writeup/writeup-prompt";
 import { WriteupSchema } from "../../util/writeup/writeup-schema";
+import { validateWriteup } from "../../util/writeup/writeup-validation";
 
 const MODEL = "claude-opus-5-5";
 // How hard the model thinks before answering. Opus 5.5 always thinks (there's no "off"), and effort is
@@ -45,7 +46,18 @@ export async function generateWriteup(summary: WeekSummary): Promise<Writeup | n
             `Write-up for ${summary.region}: ${response.usage.input_tokens} input / ` +
             `${response.usage.output_tokens} output tokens (${response.stop_reason})`,
         );
-        return readWriteupReply(response);
+        const writeup = readWriteupReply(response);
+        if (!writeup) {
+            return null;
+        }
+
+        // Keep only what our own ratings support (see util/writeup/writeup-validation.ts). Each issue
+        // is logged, so a prompt that the model keeps misreading shows up in the server log.
+        const { writeup: validated, issues } = validateWriteup(writeup, summary);
+        for (const issue of issues) {
+            console.log(`Write-up check: ${issue}`);
+        }
+        return validated;
     } catch (error) {
         logApiError(summary.region, error);
         return null;

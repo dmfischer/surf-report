@@ -1,8 +1,7 @@
 import { DayBlock, WeekSummary } from "../../model/week-summary";
 import { Writeup, WriteupDay } from "../../model/writeup";
-
-// At most this many best bets per day, so a great day doesn't turn into a list of every block.
-const MAX_BEST_BETS_PER_DAY = 3;
+// Shared with the prompt (and later the validation), so a great day doesn't turn into a list of every block.
+import { MAX_BEST_BETS_PER_DAY } from "../../util/writeup/writeup-prompt";
 
 // Blocks in the order they happen in a day, for sorting best bets.
 const BLOCK_ORDER: DayBlock[] = ["dawn", "morning", "afternoon", "evening"];

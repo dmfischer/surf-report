@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Spot } from "../model/spot";
 import { SwellForecast, WaveComponent } from "../model/swell-forecast";
 import { WindForecast } from "../model/wind-forecast";
-import { angleBetween, isInWindow, rateHour, rateHours } from "./rating";
+import { angleBetween, isInWindow, rateHour, rateHours, toCompass, windRelation } from "./rating";
 
 // A south-east-facing beach: offshore wind is from the NW (315°), swell window E to SSW.
 const spot: Spot = {
@@ -102,5 +102,29 @@ describe("isInWindow", () => {
         expect(isInWindow(10, 300, 30)).toBe(true);
         expect(isInWindow(310, 300, 30)).toBe(true);
         expect(isInWindow(180, 300, 30)).toBe(false);
+    });
+});
+
+describe("windRelation", () => {
+    it.each([
+        { directionDeg: 315, expected: "offshore" }, // straight offshore for a SE-facing beach
+        { directionDeg: 0, expected: "offshore" }, // 45° off: still offshore
+        { directionDeg: 45, expected: "cross-shore" },
+        { directionDeg: 225, expected: "cross-shore" },
+        { directionDeg: 90, expected: "onshore" }, // 45° off straight onshore
+        { directionDeg: 135, expected: "onshore" },
+    ])("wind from $directionDeg is $expected", ({ directionDeg, expected }) => {
+        expect(windRelation(spot, directionDeg)).toBe(expected);
+    });
+});
+
+describe("toCompass", () => {
+    it.each([
+        { degrees: 0, expected: "N" },
+        { degrees: 135, expected: "SE" },
+        { degrees: 200, expected: "SSW" },
+        { degrees: 355, expected: "N" }, // rounds up past NNW back to N
+    ])("$degrees° is $expected", ({ degrees, expected }) => {
+        expect(toCompass(degrees)).toBe(expected);
     });
 });

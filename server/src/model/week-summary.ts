@@ -19,6 +19,8 @@ export interface WeekSummary {
     forecastThrough: string;
     // Short plain-language version of util/rating.ts's rules, for the model's context.
     ratingRules: string[];
+    // What the numbers mean (forecast vs measured, tide datum, ...), so the model doesn't guess.
+    notes: string[];
     // One entry per tide station; spots that share a station refer to it by id.
     tides: TideStationSummary[];
     spots: SpotSummary[];
@@ -61,12 +63,22 @@ export interface SpotDaySummary {
     blocks: BlockSummary[];
 }
 
+// A block is summarized by its best hour (see util/week-summary.ts): rating, reasons, swell and wind
+// all describe that one hour, so they always agree with each other.
 export interface BlockSummary {
     block: DayBlock;
     rating: Rating;
+    // Local "HH:mm" of the hour shown (the earliest hour with the block's best rating).
+    hour: string;
+    // How many of the block's forecast hours have that rating, out of how many: tells "all morning"
+    // (4 of 4) apart from "one good hour" (1 of 4).
+    hoursAtRating: number;
+    hours: number;
     reasons: string[];
-    swell: { heightFt: number; periodS: number | null; direction: string | null; inWindow: boolean } | null;
-    wind: { speedMph: number | null; gustMph: number | null; direction: string | null; relation: WindRelation } | null;
+    // Primary swell. inWindow is null when the direction is unknown.
+    swell: { heightFt: number; periodS: number | null; direction: string | null; inWindow: boolean | null } | null;
+    // relation is null when the direction is unknown.
+    wind: { speedMph: number | null; gustMph: number | null; direction: string | null; relation: WindRelation | null } | null;
 }
 
 export type WindRelation = "offshore" | "cross-shore" | "onshore";

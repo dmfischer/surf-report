@@ -4,6 +4,7 @@ import { loadStations } from "./service/noaa-stations.service";
 import { loadBuoys } from "./service/ndbc-buoys.service";
 import { findSpotsNear, getSpot } from "./service/spots.service";
 import { getSpotConditions } from "./service/spot-conditions.service";
+import { startWriteupScheduler } from "./service/writeup-scheduler.service";
 
 const app = express();
 const PORT = 3001;
@@ -54,6 +55,9 @@ async function start() {
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    // Not awaited: generating the write-up takes a while and must never delay or break startup.
+    // It doesn't throw, but the .catch is a safety net against an unhandled rejection.
+    startWriteupScheduler().catch((err) => console.error("Write-up scheduler failed:", err));
   });
 }
 

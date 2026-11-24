@@ -1,3 +1,4 @@
+import { mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { StoredWriteup } from "../model/writeup";
 
@@ -18,7 +19,20 @@ export async function loadWriteup(): Promise<StoredWriteup | null> {
 // Writing: implemented on feature/writeup-scheduler.
 // ---------------------------------------------------------------------------------------------
 
-// PLACEHOLDER (contract only). Returns false on failure (logged, not thrown).
+// Returns false on failure (logged, not thrown).
 export async function saveWriteup(stored: StoredWriteup): Promise<boolean> {
-    throw new Error("saveWriteup is not implemented yet");
+    // Write to a temporary file next to the real one, then rename it into place. A rename on the same
+    // disk swaps the file in one step, so a crash mid-write (or a reader at the same moment) never
+    // sees half a JSON file; at worst a stray .tmp file is left behind.
+    const tempPath = `${WRITEUP_FILE_PATH}.tmp`;
+    try {
+        // The .cache folder is gitignored, so it doesn't exist in a fresh checkout.
+        await mkdir(path.dirname(WRITEUP_FILE_PATH), { recursive: true });
+        await writeFile(tempPath, JSON.stringify(stored, null, 2), "utf8");
+        await rename(tempPath, WRITEUP_FILE_PATH);
+        return true;
+    } catch (err) {
+        console.error(`Failed to save write-up to ${WRITEUP_FILE_PATH}:`, err);
+        return false;
+    }
 }

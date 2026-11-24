@@ -36,6 +36,7 @@ cd client && npm run lint
 | `GET /api/spots?zip=` | `spots.service.findSpotsNear` → `SpotsResponse`: zip location plus spots within 25 mi, nearest first. Pure lookup, no external calls. 400 if `zip` is missing |
 | `GET /api/spots/:spotId/conditions` | `spot-conditions.service.getSpotConditions` → `SpotConditionsResponse`. 404 for an unknown spot id |
 | `GET /api/conditions/:zipCode` | Zip-based report (`noaa-conditions.service.getConditions`). The client's **fallback** for zips with no spots defined |
+| `GET /api/writeup` | `writeup-store.loadWriteup` → `WriteupResponse`: the stored weekly write-up (`status: "ok"`) or `status: "not_available"` (both 200). Reads `server/.cache/writeup.json` on every request; **never calls the model** |
 | `GET /health` | Liveness |
 
 `index.ts` registers a JSON error middleware after the routes, so unhandled errors return `500 {"error":"Internal server error"}` (details logged, never sent to the client).
@@ -45,6 +46,7 @@ cd client && npm run lint
 `start()` awaits `Promise.all([loadStations(), loadBuoys()])` **before** `app.listen()` (top-level `await` is unavailable: CommonJS).
 - `loadStations()` fetches ~3,500 NOAA tide stations into a module-level array and derives each one's IANA `timeZone` from lat/lng with `@photostructure/tz-lookup` (NOAA gives none). **Failure exits the process.**
 - `loadBuoys()` fetches NDBC `activestations.xml` and the `realtime2/` directory listing, keeping the ~250 stations that have a `.spec` (wave) file. **Failure is logged and the server starts anyway**; buoy lookups then return nothing.
+- After `listen()`, `startWriteupScheduler()` runs **not awaited** (see Weekly write-up), so it never delays or breaks startup.
 
 ### Spots
 
@@ -68,12 +70,20 @@ Wind and swell forecasts are trimmed to the tide hours with `util/forecast-windo
 
 The zip report (`getConditions`) is the older flow: nearest station and nearest buoy (`findBuoy`, ≤ 50 mi) to the zip center, wind and forecast at the zip center, no ratings.
 
+### Weekly write-up (plan: `docs/llm-weekly-writeup.md`)
+
+One outlook for the whole region (`data/region.ts`: South County, `America/New_York`; all spots). **No model call exists yet**: `writeup.service.generateWriteup` is a stub (`buildStubWriteup`, headline starts `[Stub]`) with a TODO listing the steps for the real call.
+- `writeup-scheduler.service`: **off unless `WRITEUP_ENABLED=true`** (Node doesn't load `.env` by itself). `runWriteup()` = `getSpotConditions` for every spot → `util/week-summary.summarizeWeek(conditions, now)` → `generateWriteup` → `writeup-store.saveWriteup` (temp file + rename). A `running` flag skips overlapping runs. On start it regenerates only if the saved copy `isStale` (from before the most recent refresh), then re-arms a `setTimeout` (`unref()`ed) for the next refresh.
+- `util/writeup-schedule`: refreshes at 4 am / 12 pm / 8 pm **local** (`REFRESH_HOURS`), computed with `Intl` so DST doesn't shift them.
+- `summarizeWeek` is pure (`now` passed in) and is exactly what the model will see (~2.1k tokens per spot). Local day blocks: dawn 5–8, morning 8–12, afternoon 12–16, evening 16–19 (night dropped). A block takes its **best** hour's rating, reasons, swell and wind; `hoursAtRating`/`hours` say how much of the block reaches it. Past hours dropped. Tides deduplicated per station; highs/lows from a parabola through the hourly heights. `ratingRules` text is built from `rating.ts`'s exported constants, and `rating.windRelation` is the single source for offshore / cross-shore / onshore.
+- `util/writeup-shape.isStoredWriteup` checks the file read from disk before it's used.
+
 ### Conventions
 
 - `model/` holds plain-data `interface`s (not classes) for **our** shapes. Raw API shapes (NOAA `t`/`v`, NWS `validTime`, Open-Meteo parallel arrays, NDBC columns) stay private to the service that fetches them and are mapped there. Exception: `NwsGridpointData` is exported from `nws-gridpoints.service` for the `nws-*` services only.
 - Services are plain exported functions; module-level variables are in-memory caches.
 - Every service **returns `[]` or `null` on failure (logged, not thrown)**, so one source being down never fails the whole response. Each response field degrades on its own.
-- Pure parsing and calculation go in `util/` with tests (`nws.ts`, `ndbc.ts`, `rating.ts`, `forecast-window.ts`, `haversine.ts`).
+- Pure parsing and calculation go in `util/` with tests (`nws.ts`, `ndbc.ts`, `rating.ts`, `forecast-window.ts`, `haversine.ts`, `week-summary.ts`, `writeup-schedule.ts`, `writeup-shape.ts`).
 - `fetch` is Node's built-in; query strings via `URLSearchParams`; every external fetch passes `signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)` (10 s).
 - Units: wind in **mph**, waves in **feet**, periods in seconds, directions in degrees the wind/swell comes **from**. Times are ISO 8601 UTC; compare them with `Date.parse`, not as strings (some end `…:00Z`, others `…:00.000Z`).
 - Do time-zone math with `Intl.DateTimeFormat({ timeZone })`, not hand-written UTC offsets.
@@ -125,7 +135,8 @@ The zip report (`getConditions`) is the older flow: nearest station and nearest 
 - Only RI spots exist; other zips use the zip report fallback (no ratings).
 - The NWS `/points` lookup never changes for a location but isn't cached; nothing else is cached either.
 - `model/tide-prediction.ts` (high/low) is unused; intended for high/low markers.
-- Planned LLM-generated weekly write-up (data to send, guardrails, API-key protection, build order): `docs/llm-weekly-writeup.md`.
+- Weekly write-up: the Claude API call (step 2 of `docs/llm-weekly-writeup.md`: prompt, structured output, validating bestBets against the summary) and the client panel (step 5) aren't built yet. `client/src/types/` has no write-up types yet.
+- Local-time helpers (`wallClock`/offset correction) are duplicated in `noaa-tides.service.ts` and `util/writeup-schedule.ts`; could become one `util/zoned-time.ts`.
 - Remaining code-review findings: `docs/code-review-backlog.md`. Research notes (buoys, wind, maps, spots): `docs/research/`.
 
 ## Working with the developer

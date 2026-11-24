@@ -10,6 +10,9 @@ function day(date: string, ratings: Partial<Record<DayBlock, Rating>>): SpotDayS
         blocks: Object.entries(ratings).map(([block, rating]) => ({
             block: block as DayBlock,
             rating: rating as Rating,
+            hour: "06:00",
+            hoursAtRating: 1,
+            hours: 1,
             reasons: [],
             swell: null,
             wind: null,
@@ -38,6 +41,7 @@ function weekSummary(spots: SpotSummary[]): WeekSummary {
         today: "2026-11-23",
         forecastThrough: "2026-11-25",
         ratingRules: [],
+        notes: [],
         tides: [],
         spots,
     };

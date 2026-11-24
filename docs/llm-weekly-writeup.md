@@ -1,6 +1,6 @@
 # Plan: LLM-generated weekly write-up
 
-Status: planned, not started (updated 2026-11-23).
+Status: build steps 1, 3 and 4 done, plus a stub for step 2 (no model call yet: `service/writeup.service.ts`). Updated 2026-11-23.
 
 Goal: one short, readable outlook for the coming week covering **all the spots in the region**, e.g. *"Flat until Thursday, when Matunuck is the best bet at dawn before the wind turns onshore."* An LLM writes it from the data the app already has. It's generated when the server starts and refreshed three times a day, at **4 am, 12 pm and 8 pm** local time.
 
@@ -44,8 +44,8 @@ Contents, as compact JSON. Roughly 2k tokens per spot, so about 10k for five spo
 
 | Risk | Guardrail |
 |---|---|
-| Made-up numbers or windows | The system prompt says to use only the data given, never invent values, never override the ratings, and to say plainly when it's flat. Then **check in code**: every "best window" the model names must be a spot and period that's rated fair or good in the data it was **generated from**. If it isn't, discard it. |
-| Messy, unpredictable output | Ask for **structured output** (a JSON schema via `output_config.format`), e.g. `{ headline, days: [{ date, summary, bestBets: [{ spotId, period }] }], caveats }`. The client renders it like any other data, and the server can check it field by field, including that each `spotId` is one of ours. |
+| Made-up numbers or windows | The system prompt says to use only the data given, never invent values, never override the ratings, and to say plainly when it's flat. Then **check in code**: every "best window" the model names must be a spot and day block that's rated fair or good in the data it was **generated from**. If it isn't, discard it. |
+| Messy, unpredictable output | Ask for **structured output** (a JSON schema via `output_config.format`), e.g. `{ headline, days: [{ date, summary, bestBets: [{ spotId, block }] }], caveats }`. The client renders it like any other data, and the server can check it field by field, including that each `spotId` is one of ours. |
 | Prompt injection | No user-controlled text in the prompt. Everything is our own spot data and numbers we computed. The only free text is spot names, and we write those. |
 | Safety claims | The model must not make safety calls ("safe for beginners", rip currents). Say so in the prompt. Show our own fixed disclaimer in the UI instead of relying on the model to include one. |
 | Failures and refusals | Check `stop_reason` (including `refusal`) and catch API errors. If generation fails, log it and keep the **previous** write-up if there is one, otherwise none. The rest of the app is unaffected. |

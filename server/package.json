@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "writeup:example": "node -e \"const fs=require('fs');fs.mkdirSync('.cache',{recursive:true});fs.copyFileSync('fixtures/example-writeup.json','.cache/writeup.json')\""
   },
   "keywords": [],
   "author": "",

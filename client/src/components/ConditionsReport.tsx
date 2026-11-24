@@ -2,8 +2,11 @@ import { useRef, useState } from 'react';
 import ZipCodeForm from './ZipCodeForm';
 import { getConditions } from '../services/conditions.service';
 import { getSpotConditions, getSpots } from '../services/spots.service';
+import { getWriteup } from '../services/writeup.service';
 import type { ConditionsResponse } from '../types/conditions';
 import type { SpotConditionsResponse, SpotsResponse } from '../types/spots';
+import type { WriteupResponse } from '../types/writeup';
+import WriteupPanel from './WriteupPanel';
 import { toCompass } from '../utils/direction';
 import { toRatingBands } from '../utils/rating-bands';
 import RatingCaption from './RatingCaption';
@@ -31,6 +34,8 @@ function ConditionsReport() {
   // Spots near the searched zip, when there are any. Otherwise `response` holds the zip-based
   // conditions (the fallback for zips with no spots defined yet).
   const [spotsResponse, setSpotsResponse] = useState<SpotsResponse | null>(null);
+  // The region's weekly outlook, shown above the spots. null until loaded, or if it couldn't be.
+  const [writeupResponse, setWriteupResponse] = useState<WriteupResponse | null>(null);
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   // Conditions for the selected spot, once loaded.
   const [spotConditions, setSpotConditions] = useState<SpotConditionsResponse | null>(null);
@@ -58,22 +63,31 @@ function ConditionsReport() {
     latestSpotRequest.current = null;
 
     setIsLoading(true);
+    // Start the write-up request now, alongside the spots, rather than waiting for the spots first.
+    // A failure only hides the panel (logged, resolved as null), so it never breaks the spots.
+    const writeupRequest = getWriteup().catch((error: unknown) => {
+      console.error(error);
+      return null;
+    });
     try {
       const spots = await getSpots(zipCode);
       if (spots.status === 'ok' && spots.spots.length > 0) {
         // Spots nearby: show them and let the user pick one.
         setSpotsResponse(spots);
+        setWriteupResponse(await writeupRequest);
         setResponse(null);
       } else {
         // Unknown zip, or no spots defined near it yet: fall back to the zip-based report,
-        // which also produces the "Unknown zip code" message.
+        // which also produces the "Unknown zip code" message. The write-up is about the spots, so it's hidden.
         setSpotsResponse(null);
+        setWriteupResponse(null);
         setResponse(await getConditions(zipCode));
         setLoadedAt(Date.now());
       }
     } catch (error) {
       console.error(error);
       setSpotsResponse(null);
+      setWriteupResponse(null);
       setResponse(null);
       setErrorMessage("Error loading conditions");
     } finally {
@@ -196,10 +210,31 @@ function ConditionsReport() {
     result = <p className="card">{response.message}</p>;
   }
 
+  // The outlook sits above the spots card, as its own sibling, so showing it doesn't rebuild the map.
+  let writeupPanel = null;
+  if (spotsResponse && writeupResponse?.status === 'ok') {
+    const spotNames = new Map(spotsResponse.spots.map((spot) => [spot.id, spot.name]));
+    writeupPanel = (
+      <WriteupPanel
+        region={writeupResponse.region}
+        generatedAt={writeupResponse.generatedAt}
+        writeup={writeupResponse.writeup}
+        spotNames={spotNames}
+        // Only spots in this search's list can be selected (they're the ones on the map).
+        onSelectSpot={(spotId) => {
+          if (spotNames.has(spotId)) {
+            void handleSpotSelect(spotId);
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <ZipCodeForm isLoading={isLoading} onSubmit={handleZipCodeSubmit} />
       {errorMessage && <p className="form-error">{errorMessage}</p>}
+      {writeupPanel}
       {result}
     </>
   )

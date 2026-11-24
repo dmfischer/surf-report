@@ -16,6 +16,7 @@ Surf report app: enter a zip code, pick a nearby surf spot, and see that spot's 
 cd server && npm run dev          # tsx watch src/index.ts
 cd server && npx tsc --noEmit     # type-check (tsx does not type-check)
 cd server && npm test             # Vitest, run once (npm run test:watch to re-run on save)
+cd server && npm run writeup:example  # copy fixtures/example-writeup.json to .cache/ so /api/writeup serves it
 
 # client (Vite dev server, port 5173; proxies /api to localhost:3001)
 cd client && npm run dev
@@ -126,6 +127,7 @@ One outlook for the whole region (`data/region.ts`: South County, `America/New_Y
 - Components render conditional siblings as `{cond && <X/>}` so the map keeps its position and isn't rebuilt when the chart appears.
 - `WindArrowMarker` (shared by both maps): an SVG arrow whose length follows speed and thickness follows gusts (`utils/wind-arrow`), rotated the short way round (`hooks/useShortestRotation`). Marker stacking uses explicit `zIndex` on each `<Marker>` (arrow 1, dots 2, spot pins 3–4), because MapLibre otherwise stacks markers in the order they were added.
 - Rating bands: `utils/rating-bands` merges equal consecutive hours; `TideChart` draws them as Recharts `<ReferenceArea>`s, coloured in CSS (`.rating-band--good` etc.) so they can use the theme variables, with dark-mode values in `index.css`.
+- `WriteupPanel`: the region's weekly outlook, above the spots card. `getWriteup()` starts alongside `getSpots()` and a failure only hides the panel; it shows only when there are spots. It's labelled "AI-generated outlook" with the time it was written, best bets are buttons that select that spot, and the safety disclaimer is our fixed text, never the model's. Write-up dates are calendar dates, so they're formatted in UTC (from `T12:00:00Z`) to keep the weekday right in any time zone.
 - `client/src/types/*.ts` are hand-copied from `server/src/model/`: **keep them in sync** when the API changes.
 
 ## Known gaps / planned work
@@ -135,7 +137,7 @@ One outlook for the whole region (`data/region.ts`: South County, `America/New_Y
 - Only RI spots exist; other zips use the zip report fallback (no ratings).
 - The NWS `/points` lookup never changes for a location but isn't cached; nothing else is cached either.
 - `model/tide-prediction.ts` (high/low) is unused; intended for high/low markers.
-- Weekly write-up: the Claude API call (step 2 of `docs/llm-weekly-writeup.md`: prompt, structured output, validating bestBets against the summary) and the client panel (step 5) aren't built yet. `client/src/types/` has no write-up types yet.
+- Weekly write-up: the Claude API call (step 2 of `docs/llm-weekly-writeup.md`: prompt, structured output, validating bestBets against the summary) isn't built yet. Until it is, `npm run writeup:example` (or the stub, with `WRITEUP_ENABLED=true`) is how to see the client panel.
 - Local-time helpers (`wallClock`/offset correction) are duplicated in `noaa-tides.service.ts` and `util/writeup/writeup-schedule.ts`; could become one `util/zoned-time.ts`.
 - Remaining code-review findings: `docs/code-review-backlog.md`. Research notes (buoys, wind, maps, spots): `docs/research/`.
 

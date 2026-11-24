@@ -4,6 +4,8 @@ import { loadStations } from "./service/noaa-stations.service";
 import { loadBuoys } from "./service/ndbc-buoys.service";
 import { findSpotsNear, getSpot } from "./service/spots.service";
 import { getSpotConditions } from "./service/spot-conditions.service";
+import { loadWriteup } from "./service/writeup-store.service";
+import { WriteupResponse } from "./model/writeup-response";
 
 const app = express();
 const PORT = 3001;
@@ -38,6 +40,17 @@ app.get("/api/spots/:spotId/conditions", async (req: Request<{ spotId: string }>
         return;
     }
     res.json(await getSpotConditions(spot));
+});
+
+// GET /api/writeup: the latest AI-generated weekly outlook. A separate endpoint from /api/spots, so
+// the spots lookup stays instant and doesn't depend on the write-up. It never calls the model: it
+// only serves the copy the scheduler saved, so traffic here costs nothing extra.
+app.get("/api/writeup", async (req: Request, res: Response) => {
+    const stored = await loadWriteup();
+    const response: WriteupResponse = stored
+        ? { status: "ok", region: stored.region, generatedAt: stored.generatedAt, writeup: stored.writeup }
+        : { status: "not_available", message: "The weekly outlook isn't available yet. Check back later." };
+    res.json(response);
 });
 
 // Error-handling middleware (4 args) must be registered after the routes. Express 5 forwards

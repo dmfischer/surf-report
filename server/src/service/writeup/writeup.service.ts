@@ -7,7 +7,7 @@ import { buildWriteupUserMessage, MAX_BEST_BETS_PER_DAY, WRITEUP_SYSTEM_PROMPT }
 import { WriteupSchema } from "../../util/writeup/writeup-schema";
 import { validateWriteup } from "../../util/writeup/writeup-validation";
 
-const MODEL = "claude-opus-5-5";
+const MODEL = "claude-sonnet-5-5";
 // How hard the model thinks before answering. Opus 5.5 always thinks (there's no "off"), and effort is
 // the only control. "medium" is its default, set explicitly so it's visible here; comparing a few spots
 // over a week is moderate work. Revisit once there are real write-ups to judge.

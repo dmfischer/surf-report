@@ -2,7 +2,7 @@ import { StoredWriteup } from "../../model/writeup";
 
 // Local hours (in the region's time zone) at which the write-up is regenerated. Fixed times, rather
 // than "every 8 hours", so restarts don't shift the schedule; 4 am has a fresh outlook ready for dawn.
-export const REFRESH_HOURS = [4, 12, 20];
+export const REFRESH_HOURS = [4];
 
 // The latest scheduled time at or before `now`. If now is exactly 12:00, that's 12:00 itself.
 export function mostRecentScheduledTime(now: Date, timeZone: string, hours: number[] = REFRESH_HOURS): Date {

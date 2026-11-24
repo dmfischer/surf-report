@@ -1,5 +1,5 @@
-import { DayBlock, WeekSummary } from "../model/week-summary";
-import { Writeup, WriteupDay } from "../model/writeup";
+import { DayBlock, WeekSummary } from "../../model/week-summary";
+import { Writeup, WriteupDay } from "../../model/writeup";
 
 // At most this many best bets per day, so a great day doesn't turn into a list of every block.
 const MAX_BEST_BETS_PER_DAY = 3;

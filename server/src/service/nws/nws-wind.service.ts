@@ -1,5 +1,5 @@
-import { WindForecast } from "../model/wind-forecast";
-import { expandLayer } from "../util/nws";
+import { WindForecast } from "../../model/wind-forecast";
+import { expandLayer } from "../../util/nws/nws";
 import { NwsGridpointData } from "./nws-gridpoints.service";
 
 const KMH_PER_MPH = 1.609344;

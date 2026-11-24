@@ -1,7 +1,7 @@
-import { Buoy } from "../model/buoy";
-import { LatLng } from "../model/lat-lng";
-import { haversineDistanceMiles } from "../util/haversine";
-import { parseActiveStations, parseSpecFileIds } from "../util/ndbc";
+import { Buoy } from "../../model/buoy";
+import { LatLng } from "../../model/lat-lng";
+import { haversineDistanceMiles } from "../../util/geo/haversine";
+import { parseActiveStations, parseSpecFileIds } from "../../util/ndbc/ndbc";
 
 const ACTIVE_STATIONS_URL = "https://www.ndbc.noaa.gov/activestations.xml";
 // Directory listing of realtime files; a <id>.spec file means the station reports waves.

@@ -1,12 +1,12 @@
 import express, { NextFunction, Request, Response } from "express";
-import { getConditions } from "./service/noaa-conditions.service";
-import { loadStations } from "./service/noaa-stations.service";
-import { loadBuoys } from "./service/ndbc-buoys.service";
-import { findSpotsNear, getSpot } from "./service/spots.service";
-import { getSpotConditions } from "./service/spot-conditions.service";
-import { loadWriteup } from "./service/writeup-store.service";
+import { getConditions } from "./service/spots/noaa-conditions.service";
+import { loadStations } from "./service/noaa/noaa-stations.service";
+import { loadBuoys } from "./service/ndbc/ndbc-buoys.service";
+import { findSpotsNear, getSpot } from "./service/spots/spots.service";
+import { getSpotConditions } from "./service/spots/spot-conditions.service";
+import { loadWriteup } from "./service/writeup/writeup-store.service";
 import { WriteupResponse } from "./model/writeup-response";
-import { startWriteupScheduler } from "./service/writeup-scheduler.service";
+import { startWriteupScheduler } from "./service/writeup/writeup-scheduler.service";
 
 const app = express();
 const PORT = 3001;

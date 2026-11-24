@@ -1,6 +1,6 @@
 // Parsers for NDBC (National Data Buoy Center) files. NDBC has no JSON API.
-import { Buoy } from "../model/buoy";
-import { SwellReading } from "../model/swell-reading";
+import { Buoy } from "../../model/buoy";
+import { SwellReading } from "../../model/swell-reading";
 
 const FEET_PER_METRE = 3.28084;
 

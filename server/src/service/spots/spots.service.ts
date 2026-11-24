@@ -1,8 +1,8 @@
 import zipcodes from "zipcodes";
-import { SPOTS } from "../data/spots";
-import { Spot } from "../model/spot";
-import { SpotsResponse } from "../model/spots-response";
-import { haversineDistanceMiles } from "../util/haversine";
+import { SPOTS } from "../../data/spots";
+import { Spot } from "../../model/spot";
+import { SpotsResponse } from "../../model/spots-response";
+import { haversineDistanceMiles } from "../../util/geo/haversine";
 
 export const DEFAULT_MAX_SPOT_DISTANCE_MILES = 25;
 

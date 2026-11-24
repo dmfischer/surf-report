@@ -1,4 +1,4 @@
-import { StoredWriteup } from "../model/writeup";
+import { StoredWriteup } from "../../model/writeup";
 
 // Local hours (in the region's time zone) at which the write-up is regenerated. Fixed times, rather
 // than "every 8 hours", so restarts don't shift the schedule; 4 am has a fresh outlook ready for dawn.

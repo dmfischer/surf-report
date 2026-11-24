@@ -1,5 +1,5 @@
-import { LatLng } from "../model/lat-lng";
-import { NwsGridLayer } from "../util/nws";
+import { LatLng } from "../../model/lat-lng";
+import { NwsGridLayer } from "../../util/nws/nws";
 
 // NWS (api.weather.gov) is a different API from NOAA CO-OPS: different base URL, GeoJSON responses,
 // and it requires an identifying User-Agent (Node's fetch sends just "node" by default).

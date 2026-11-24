@@ -1,8 +1,8 @@
-import { HourRating, Rating } from "../model/hour-rating";
-import { Spot } from "../model/spot";
-import { SwellForecast, WaveComponent } from "../model/swell-forecast";
-import { WindRelation } from "../model/week-summary";
-import { WindForecast } from "../model/wind-forecast";
+import { HourRating, Rating } from "../../model/hour-rating";
+import { Spot } from "../../model/spot";
+import { SwellForecast, WaveComponent } from "../../model/swell-forecast";
+import { WindRelation } from "../../model/week-summary";
+import { WindForecast } from "../../model/wind-forecast";
 
 // Thresholds for version 1: a starting point to tune against days you know.
 // Exported so util/week-summary.ts can describe the rules to the LLM from the same numbers.

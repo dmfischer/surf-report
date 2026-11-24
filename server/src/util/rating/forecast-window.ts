@@ -1,4 +1,4 @@
-import { TideLevel } from "../model/tide-level";
+import { TideLevel } from "../../model/tide-level";
 
 // Forecasts (wind from NWS, swell from Open-Meteo) start earlier and run longer than the tide chart;
 // keep only the hours the chart shows, so everything shares one x-axis. Without tides, keep them all.

@@ -1,6 +1,6 @@
-import { Buoy } from "../model/buoy";
-import { SwellReading } from "../model/swell-reading";
-import { parseSpecReadings } from "../util/ndbc";
+import { Buoy } from "../../model/buoy";
+import { SwellReading } from "../../model/swell-reading";
+import { parseSpecReadings } from "../../util/ndbc/ndbc";
 
 const NDBC_REALTIME_URL = "https://www.ndbc.noaa.gov/data/realtime2";
 

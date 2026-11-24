@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { Spot } from "../model/spot";
-import { SwellForecast, WaveComponent } from "../model/swell-forecast";
-import { WindForecast } from "../model/wind-forecast";
+import { Spot } from "../../model/spot";
+import { SwellForecast, WaveComponent } from "../../model/swell-forecast";
+import { WindForecast } from "../../model/wind-forecast";
 import { angleBetween, isInWindow, rateHour, rateHours, toCompass, windRelation } from "./rating";
 
 // A south-east-facing beach: offshore wind is from the NW (315°), swell window E to SSW.

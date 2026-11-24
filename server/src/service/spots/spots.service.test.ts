@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { SPOTS } from "../data/spots";
-import { Spot } from "../model/spot";
+import { SPOTS } from "../../data/spots";
+import { Spot } from "../../model/spot";
 import { findSpotsNear, getSpot } from "./spots.service";
 
 describe("findSpotsNear", () => {

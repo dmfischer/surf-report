@@ -1,8 +1,8 @@
-import { REGION } from "../data/region";
-import { SPOTS } from "../data/spots";
-import { isStale, nextScheduledTime } from "../util/writeup-schedule";
-import { summarizeWeek } from "../util/week-summary";
-import { getSpotConditions } from "./spot-conditions.service";
+import { REGION } from "../../data/region";
+import { SPOTS } from "../../data/spots";
+import { isStale, nextScheduledTime } from "../../util/writeup/writeup-schedule";
+import { summarizeWeek } from "../../util/writeup/week-summary";
+import { getSpotConditions } from "../spots/spot-conditions.service";
 import { generateWriteup } from "./writeup.service";
 import { loadWriteup, saveWriteup } from "./writeup-store.service";
 

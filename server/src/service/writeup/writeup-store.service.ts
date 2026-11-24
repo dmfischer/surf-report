@@ -1,11 +1,11 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { StoredWriteup } from "../model/writeup";
-import { isStoredWriteup } from "../util/writeup-shape";
+import { StoredWriteup } from "../../model/writeup";
+import { isStoredWriteup } from "../../util/writeup/writeup-shape";
 
 // The latest write-up lives in server/.cache/writeup.json (gitignored), so restarts (e.g. every save
 // under `tsx watch`) don't regenerate it. Resolved from this file, not the working directory.
-export const WRITEUP_FILE_PATH = path.join(__dirname, "..", "..", ".cache", "writeup.json");
+export const WRITEUP_FILE_PATH = path.join(__dirname, "..", "..", "..", ".cache", "writeup.json");
 
 // ---------------------------------------------------------------------------------------------
 // Reading

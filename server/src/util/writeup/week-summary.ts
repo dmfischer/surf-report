@@ -1,9 +1,9 @@
-import { REGION } from "../data/region";
-import { HourRating, Rating } from "../model/hour-rating";
-import { Spot } from "../model/spot";
-import { SpotConditionsResponse } from "../model/spot-conditions-response";
-import { SwellForecast } from "../model/swell-forecast";
-import { TideLevel } from "../model/tide-level";
+import { REGION } from "../../data/region";
+import { HourRating, Rating } from "../../model/hour-rating";
+import { Spot } from "../../model/spot";
+import { SpotConditionsResponse } from "../../model/spot-conditions-response";
+import { SwellForecast } from "../../model/swell-forecast";
+import { TideLevel } from "../../model/tide-level";
 import {
     BlockSummary,
     BuoyReadingSummary,
@@ -13,8 +13,8 @@ import {
     TideStationSummary,
     TideTurn,
     WeekSummary,
-} from "../model/week-summary";
-import { WindForecast } from "../model/wind-forecast";
+} from "../../model/week-summary";
+import { WindForecast } from "../../model/wind-forecast";
 import {
     BIG_SWELL_GOOD_FROM_FT,
     BIG_SWELL_PERIOD_GOOD_FROM_S,
@@ -30,7 +30,7 @@ import {
     ratingRank,
     toCompass,
     windRelation,
-} from "./rating";
+} from "../rating/rating";
 
 // Parts of the local day, as [startHour, endHour) in local clock hours: an hour starting at 8:00 is
 // morning, not dawn. Night hours (19:00-05:00) are dropped: nobody surfs them, and leaving them out

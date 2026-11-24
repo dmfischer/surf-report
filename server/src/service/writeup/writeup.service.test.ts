@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DayBlock, SpotDaySummary, SpotSummary, WeekSummary } from "../model/week-summary";
-import { Rating } from "../model/hour-rating";
+import { DayBlock, SpotDaySummary, SpotSummary, WeekSummary } from "../../model/week-summary";
+import { Rating } from "../../model/hour-rating";
 import { buildStubWriteup, generateWriteup } from "./writeup.service";
 
 // Only the fields the stub reads matter; the rest are filler so the fixture satisfies WeekSummary.

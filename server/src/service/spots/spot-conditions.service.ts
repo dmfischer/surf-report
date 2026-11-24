@@ -1,14 +1,14 @@
-import { Spot } from "../model/spot";
-import { SpotConditionsResponse } from "../model/spot-conditions-response";
-import { trimToTideHours } from "../util/forecast-window";
-import { rateHours } from "../util/rating";
-import { getBuoy } from "./ndbc-buoys.service";
-import { getLatestSwell } from "./ndbc-swell.service";
-import { DEFAULT_MAX_STATION_DISTANCE_MILES, findNearestStation } from "./noaa-stations.service";
-import { getTideLevels } from "./noaa-tides.service";
-import { getGridpointData } from "./nws-gridpoints.service";
-import { getWindForecast } from "./nws-wind.service";
-import { getSwellForecast } from "./open-meteo-swell.service";
+import { Spot } from "../../model/spot";
+import { SpotConditionsResponse } from "../../model/spot-conditions-response";
+import { trimToTideHours } from "../../util/rating/forecast-window";
+import { rateHours } from "../../util/rating/rating";
+import { getBuoy } from "../ndbc/ndbc-buoys.service";
+import { getLatestSwell } from "../ndbc/ndbc-swell.service";
+import { DEFAULT_MAX_STATION_DISTANCE_MILES, findNearestStation } from "../noaa/noaa-stations.service";
+import { getTideLevels } from "../noaa/noaa-tides.service";
+import { getGridpointData } from "../nws/nws-gridpoints.service";
+import { getWindForecast } from "../nws/nws-wind.service";
+import { getSwellForecast } from "../open-meteo/open-meteo-swell.service";
 
 // Conditions for one surf spot. Same data sources as the zip-based getConditions, but every location
 // comes from the spot: wind and swell forecast at the spot, measured swell from the spot's chosen buoy,

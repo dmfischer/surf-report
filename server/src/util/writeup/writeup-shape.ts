@@ -1,5 +1,5 @@
-import { DayBlock } from "../model/week-summary";
-import { StoredWriteup } from "../model/writeup";
+import { DayBlock } from "../../model/week-summary";
+import { StoredWriteup } from "../../model/writeup";
 
 const DAY_BLOCKS: readonly DayBlock[] = ["dawn", "morning", "afternoon", "evening"];
 

@@ -1,5 +1,5 @@
-import { LatLng } from "../model/lat-lng";
-import { SwellForecast, WaveComponent } from "../model/swell-forecast";
+import { LatLng } from "../../model/lat-lng";
+import { SwellForecast, WaveComponent } from "../../model/swell-forecast";
 
 // Open-Meteo's free tier is for non-commercial use, and its data (CC BY 4.0) must be credited
 // on the page: the client shows "Swell forecast: Open-Meteo.com".

@@ -1,5 +1,5 @@
-import { Station } from "../model/station";
-import { TideLevel } from "../model/tide-level";
+import { Station } from "../../model/station";
+import { TideLevel } from "../../model/tide-level";
 
 const TIDES_BASE_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
 

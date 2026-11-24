@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { HourRating, Rating } from "../model/hour-rating";
-import { Spot } from "../model/spot";
-import { SpotConditionsResponse } from "../model/spot-conditions-response";
-import { Station } from "../model/station";
-import { SwellForecast } from "../model/swell-forecast";
-import { TideLevel } from "../model/tide-level";
-import { WindForecast } from "../model/wind-forecast";
+import { HourRating, Rating } from "../../model/hour-rating";
+import { Spot } from "../../model/spot";
+import { SpotConditionsResponse } from "../../model/spot-conditions-response";
+import { Station } from "../../model/station";
+import { SwellForecast } from "../../model/swell-forecast";
+import { TideLevel } from "../../model/tide-level";
+import { WindForecast } from "../../model/wind-forecast";
 import { blockForHour, findTideTurns, parabolaVertex, summarizeWeek } from "./week-summary";
 
 // REGION is America/New_York. On 2026-11-24 (EST, UTC-5) local hour h is UTC hour h + 5.

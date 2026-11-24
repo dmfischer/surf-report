@@ -1,8 +1,8 @@
 import tzlookup from "@photostructure/tz-lookup";
 import zipcodes, { ZipCode } from "zipcodes";
-import { LatLng } from "../model/lat-lng";
-import { Station } from "../model/station";
-import { haversineDistanceMiles } from "../util/haversine";
+import { LatLng } from "../../model/lat-lng";
+import { Station } from "../../model/station";
+import { haversineDistanceMiles } from "../../util/geo/haversine";
 
 const STATIONS_URL =
     "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions&units=english";

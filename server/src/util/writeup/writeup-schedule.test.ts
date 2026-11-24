@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { isStale, mostRecentScheduledTime, nextScheduledTime } from "./writeup-schedule";
-import { StoredWriteup } from "../model/writeup";
+import { StoredWriteup } from "../../model/writeup";
 
 const ZONE = "America/New_York";
 

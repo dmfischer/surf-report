@@ -63,7 +63,7 @@ Every location comes from the spot; four independent requests run with `Promise.
 3. Measured swell: `ndbc-buoys.getBuoy(spot.buoyId)` → `ndbc-swell.getLatestSwell(buoy)`: newest `.spec` row (feet).
 4. Swell forecast: `open-meteo-swell.getSwellForecast(spot)` → hourly primary/secondary swell and wind waves (feet), from the nearest **ocean** grid cell.
 
-Wind and swell forecasts are trimmed to the tide hours with `util/forecast-window.trimToTideHours` so everything shares one x-axis. Then `util/rating.rateHours(spot, swellForecast, windForecast)` gives one `HourRating` per hour:
+Wind and swell forecasts are trimmed to the tide hours with `util/rating/forecast-window.trimToTideHours` so everything shares one x-axis. Then `util/rating/rating.rateHours(spot, swellForecast, windForecast)` gives one `HourRating` per hour:
 - Swell: rate primary and secondary, keep the **better**; poor if outside the spot's swell window, < 1.5 ft or < 6 s; good if ≥ 3 ft and ≥ 9 s; else fair.
 - Wind: < 6 mph good; offshore (within 45° of `facingDeg + 180`) good; onshore > 12 mph poor; cross-shore or light onshore fair.
 - Overall = the **worst** factor; `reasons[]` explains each. Tide isn't rated yet. Thresholds are named constants at the top of `rating.ts`.
@@ -73,17 +73,17 @@ The zip report (`getConditions`) is the older flow: nearest station and nearest 
 ### Weekly write-up (plan: `docs/llm-weekly-writeup.md`)
 
 One outlook for the whole region (`data/region.ts`: South County, `America/New_York`; all spots). **No model call exists yet**: `writeup.service.generateWriteup` is a stub (`buildStubWriteup`, headline starts `[Stub]`) with a TODO listing the steps for the real call.
-- `writeup-scheduler.service`: **off unless `WRITEUP_ENABLED=true`** (Node doesn't load `.env` by itself). `runWriteup()` = `getSpotConditions` for every spot → `util/week-summary.summarizeWeek(conditions, now)` → `generateWriteup` → `writeup-store.saveWriteup` (temp file + rename). A `running` flag skips overlapping runs. On start it regenerates only if the saved copy `isStale` (from before the most recent refresh), then re-arms a `setTimeout` (`unref()`ed) for the next refresh.
-- `util/writeup-schedule`: refreshes at 4 am / 12 pm / 8 pm **local** (`REFRESH_HOURS`), computed with `Intl` so DST doesn't shift them.
+- `writeup-scheduler.service`: **off unless `WRITEUP_ENABLED=true`** (Node doesn't load `.env` by itself). `runWriteup()` = `getSpotConditions` for every spot → `util/writeup/week-summary.summarizeWeek(conditions, now)` → `generateWriteup` → `writeup-store.saveWriteup` (temp file + rename). A `running` flag skips overlapping runs. On start it regenerates only if the saved copy `isStale` (from before the most recent refresh), then re-arms a `setTimeout` (`unref()`ed) for the next refresh.
+- `util/writeup/writeup-schedule`: refreshes at 4 am / 12 pm / 8 pm **local** (`REFRESH_HOURS`), computed with `Intl` so DST doesn't shift them.
 - `summarizeWeek` is pure (`now` passed in) and is exactly what the model will see (~2.1k tokens per spot). Local day blocks: dawn 5–8, morning 8–12, afternoon 12–16, evening 16–19 (night dropped). A block takes its **best** hour's rating, reasons, swell and wind; `hoursAtRating`/`hours` say how much of the block reaches it. Past hours dropped. Tides deduplicated per station; highs/lows from a parabola through the hourly heights. `ratingRules` text is built from `rating.ts`'s exported constants, and `rating.windRelation` is the single source for offshore / cross-shore / onshore.
-- `util/writeup-shape.isStoredWriteup` checks the file read from disk before it's used.
+- `util/writeup/writeup-shape.isStoredWriteup` checks the file read from disk before it's used.
 
 ### Conventions
 
 - `model/` holds plain-data `interface`s (not classes) for **our** shapes. Raw API shapes (NOAA `t`/`v`, NWS `validTime`, Open-Meteo parallel arrays, NDBC columns) stay private to the service that fetches them and are mapped there. Exception: `NwsGridpointData` is exported from `nws-gridpoints.service` for the `nws-*` services only.
 - Services are plain exported functions; module-level variables are in-memory caches.
 - Every service **returns `[]` or `null` on failure (logged, not thrown)**, so one source being down never fails the whole response. Each response field degrades on its own.
-- Pure parsing and calculation go in `util/` with tests (`nws.ts`, `ndbc.ts`, `rating.ts`, `forecast-window.ts`, `haversine.ts`, `week-summary.ts`, `writeup-schedule.ts`, `writeup-shape.ts`).
+- Pure parsing and calculation go in `util/` with tests; services (fetching, caching, orchestration) in `service/`. Both use the **same subfolders**, by data source or feature: `ndbc/`, `noaa/` (service only), `nws/`, `open-meteo/` (service only), `spots/` (spot lookup, spot conditions, the zip report; service only), `rating/` (`rating.ts`, `forecast-window.ts`; util only), `writeup/`, `geo/` (`haversine.ts`; util only). New files go in the matching subfolder; file names keep their prefix (`nws-wind.service.ts`) so they stay unique.
 - `fetch` is Node's built-in; query strings via `URLSearchParams`; every external fetch passes `signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)` (10 s).
 - Units: wind in **mph**, waves in **feet**, periods in seconds, directions in degrees the wind/swell comes **from**. Times are ISO 8601 UTC; compare them with `Date.parse`, not as strings (some end `…:00Z`, others `…:00.000Z`).
 - Do time-zone math with `Intl.DateTimeFormat({ timeZone })`, not hand-written UTC offsets.
@@ -101,13 +101,13 @@ One outlook for the whole region (`data/region.ts`: South County, `America/New_Y
 ### NWS api.weather.gov (wind)
 - Requires an identifying `User-Agent` (Node's default is just `node`). We send a generic one; don't put personal contact details in it.
 - `/points/{lat},{lng}` accepts at most 4 decimals; returns 404 for open ocean. `properties.type` is `"land"` or `"marine"`.
-- Gridpoint layers are lists of `{ validTime: "2026-11-15T02:00:00+00:00/PT3H", value }`: a start plus an ISO 8601 duration, with consecutive equal hours merged, so layers have different lengths. `util/nws.expandLayer` expands them to one value per hour before joining.
+- Gridpoint layers are lists of `{ validTime: "2026-11-15T02:00:00+00:00/PT3H", value }`: a start plus an ISO 8601 duration, with consecutive equal hours merged, so layers have different lengths. `util/nws/nws.expandLayer` expands them to one value per hour before joining.
 - Speeds are **km/h** (`uom: "wmoUnit:km_h-1"`), whole knots converted, so we round to whole mph. The service checks `uom` and returns `[]` if it changes.
 - Wind exists for land and marine cells. **Wave layers are only non-zero in marine cells**, land cells report `0`, and the Boston (BOX) and NY (OKX) offices have no swell partitions at all. Hence Open-Meteo for the swell forecast.
 - HTTP/2 responses have an empty `statusText`.
 
 ### NDBC (buoys)
-- No JSON API. `activestations.xml` is flat self-closing tags (parsed with regex in `util/ndbc.ts`); it has no "reports waves" flag, so wave buoys are found via `.spec` files in the `realtime2/` listing.
+- No JSON API. `activestations.xml` is flat self-closing tags (parsed with regex in `util/ndbc/ndbc.ts`); it has no "reports waves" flag, so wave buoys are found via `.spec` files in the `realtime2/` listing.
 - `realtime2/{ID}.spec`: whitespace-separated, two `#` header lines, **newest row first**, 45 days. File names are uppercase. Columns are located by name from the `#YY` header.
 - Missing values are `MM`, `-99` and `N/A`. `SwD`/`WWD` are 16-point compass text, not degrees, despite the header.
 - `WVHT` is significant wave height at the buoy, not surf face height. Measurements only, no forecast.
@@ -136,7 +136,7 @@ One outlook for the whole region (`data/region.ts`: South County, `America/New_Y
 - The NWS `/points` lookup never changes for a location but isn't cached; nothing else is cached either.
 - `model/tide-prediction.ts` (high/low) is unused; intended for high/low markers.
 - Weekly write-up: the Claude API call (step 2 of `docs/llm-weekly-writeup.md`: prompt, structured output, validating bestBets against the summary) and the client panel (step 5) aren't built yet. `client/src/types/` has no write-up types yet.
-- Local-time helpers (`wallClock`/offset correction) are duplicated in `noaa-tides.service.ts` and `util/writeup-schedule.ts`; could become one `util/zoned-time.ts`.
+- Local-time helpers (`wallClock`/offset correction) are duplicated in `noaa-tides.service.ts` and `util/writeup/writeup-schedule.ts`; could become one `util/zoned-time.ts`.
 - Remaining code-review findings: `docs/code-review-backlog.md`. Research notes (buoys, wind, maps, spots): `docs/research/`.
 
 ## Working with the developer

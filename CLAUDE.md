@@ -125,6 +125,7 @@ The zip report (`getConditions`) is the older flow: nearest station and nearest 
 - Only RI spots exist; other zips use the zip report fallback (no ratings).
 - The NWS `/points` lookup never changes for a location but isn't cached; nothing else is cached either.
 - `model/tide-prediction.ts` (high/low) is unused; intended for high/low markers.
+- Planned LLM-generated weekly write-up (data to send, guardrails, API-key protection, build order): `docs/llm-weekly-writeup.md`.
 - Remaining code-review findings: `docs/code-review-backlog.md`. Research notes (buoys, wind, maps, spots): `docs/research/`.
 
 ## Working with the developer

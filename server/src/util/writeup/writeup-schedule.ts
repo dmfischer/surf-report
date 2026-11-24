@@ -22,8 +22,9 @@ export function nextScheduledTime(now: Date, timeZone: string, hours: number[] =
 }
 
 // A saved write-up is stale if there isn't one, or it was generated before the most recent refresh
-// time (e.g. after a restart at 1 pm, one from 12:05 pm is fresh but one from 4:05 am missed 12 pm).
-export function isStale(stored: StoredWriteup | null, now: Date, timeZone: string): boolean {
+// time (e.g. with refreshes at 4 am and 12 pm, after a restart at 1 pm a copy from 12:05 pm is fresh but
+// one from 4:05 am missed the 12 pm refresh).
+export function isStale(stored: StoredWriteup | null, now: Date, timeZone: string, hours: number[] = REFRESH_HOURS): boolean {
     if (!stored) {
         return true;
     }
@@ -32,7 +33,7 @@ export function isStale(stored: StoredWriteup | null, now: Date, timeZone: strin
     if (Number.isNaN(generatedAt)) {
         return true;
     }
-    return generatedAt < mostRecentScheduledTime(now, timeZone).getTime();
+    return generatedAt < mostRecentScheduledTime(now, timeZone, hours).getTime();
 }
 
 // Every scheduled instant on the given local days (offsets from today, e.g. -1 = yesterday), sorted.

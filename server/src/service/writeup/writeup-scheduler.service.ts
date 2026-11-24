@@ -47,7 +47,7 @@ export async function runWriteup(): Promise<void> {
 }
 
 // Called once at startup, after listen(). Generates now if the saved copy is missing or missed a
-// refresh, then runs at each scheduled time (4 am, 12 pm, 8 pm local).
+// refresh, then runs at each scheduled time (REFRESH_HOURS, local; currently 4 am daily).
 export async function startWriteupScheduler(): Promise<void> {
     if (!isWriteupEnabled()) {
         console.log("Write-up generation is off (set WRITEUP_ENABLED=true to turn it on)");

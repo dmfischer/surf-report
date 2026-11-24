@@ -7,10 +7,12 @@ import { buildWriteupUserMessage, MAX_BEST_BETS_PER_DAY, WRITEUP_SYSTEM_PROMPT }
 import { WriteupSchema } from "../../util/writeup/writeup-schema";
 import { validateWriteup } from "../../util/writeup/writeup-validation";
 
+// Sonnet 5.5 rather than Opus 5.5: half the price per token, and once a day (REFRESH_HOURS) keeps the
+// monthly cost to about a dollar. Switch back here if the write-ups aren't good enough.
 const MODEL = "claude-sonnet-5-5";
-// How hard the model thinks before answering. Opus 5.5 always thinks (there's no "off"), and effort is
-// the only control. "medium" is its default, set explicitly so it's visible here; comparing a few spots
-// over a week is moderate work. Revisit once there are real write-ups to judge.
+// How hard the model thinks before answering; effort is the main control. Sonnet 5.5 defaults to
+// "high", so "medium" is a deliberate step down to save tokens: comparing a few spots over a week is
+// moderate work. Revisit once there are real write-ups to judge.
 const EFFORT = "medium";
 // Upper bound on the reply, thinking included. A write-up is ~1-2k tokens; the headroom is for the
 // thinking. Reaching it cuts the JSON off (stop_reason "max_tokens"), which we treat as a failure.
@@ -30,7 +32,7 @@ export async function generateWriteup(summary: WeekSummary): Promise<Writeup | n
         const response = await client.messages.parse({
             model: MODEL,
             max_tokens: MAX_TOKENS,
-            // No `thinking` field: on Opus 5.5, leaving it out means adaptive thinking (the model
+            // No `thinking` field: on Sonnet 5.5, leaving it out means adaptive thinking (the model
             // decides how much to think), which is what we want.
             output_config: {
                 effort: EFFORT,

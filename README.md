@@ -12,7 +12,7 @@ Find out whether it's worth paddling out. Enter a U.S. zip code, pick a nearby s
 - **Wind at the spot:** an arrow on the map that points the way the wind is blowing. Its length follows the speed and its thickness the gusts.
 - **Swell:** the latest measurement from the spot's chosen buoy, plus an hourly forecast of primary and secondary swell.
 - **Hover the tide chart** to see the rating, wind and swell forecast for any hour.
-- **Weekly outlook:** a short write-up of the coming week across all the spots, e.g. *"Small until Thursday, then a clean southeast swell makes Friday the day"*, with the best spot and time of day for each day worth surfing. Claude writes it from the app's own ratings and data, three times a day; it's labelled as AI-generated and shows when it was written. Optional: it needs an Anthropic API key (see below).
+- **Weekly outlook:** a short write-up of the coming week across all the spots, e.g. *"Small until Thursday, then a clean southeast swell makes Friday the day"*, with the best spot and time of day for each day worth surfing. Claude writes it from the app's own ratings and data, once a day; it's labelled as AI-generated and shows when it was written. Optional: it needs an Anthropic API key (see below).
 
 **Zip-based report:** for zip codes with no spots defined yet (for example `92651`, Laguna Beach), you get the tides, wind and swell for the zip code itself, without ratings.
 
@@ -42,12 +42,12 @@ The server downloads NOAA's tide stations and NDBC's buoy list when it starts, s
 
 ### The weekly outlook (optional)
 
-The outlook is written by [Claude](https://www.anthropic.com/claude) (Claude Opus 5.5) through the Anthropic API, which is billed separately from a Claude Pro or Max subscription. At three write-ups a day it costs roughly $5–6 a month. It's off unless you turn it on:
+The outlook is written by [Claude](https://www.anthropic.com/claude) (Claude Sonnet 5.5) through the Anthropic API, which is billed separately from a Claude Pro or Max subscription. At one write-up a day it costs roughly $1 a month. It's off unless you turn it on:
 
 1. In the [Claude Console](https://console.anthropic.com/), create a workspace with a monthly spend limit and an API key in it.
 2. Copy `server/.env.example` to `server/.env`, then set `ANTHROPIC_API_KEY` and `WRITEUP_ENABLED=true`. `npm run dev` loads this file; it's gitignored. Keep the key on the server only, and never give it a `VITE_` prefix, which would build it into the public JavaScript.
 
-The server then writes an outlook when it starts (unless the saved one is still current) and again at 4 am, 12 pm and 8 pm New York time, and saves it to `server/.cache/writeup.json`, so restarts don't call the API again. Visitors only ever get the saved copy.
+The server then writes an outlook when it starts (unless the saved one is still current) and again every day at 4 am New York time, and saves it to `server/.cache/writeup.json`, so restarts don't call the API again. Visitors only ever get the saved copy.
 
 To see the panel without a key, run `npm run writeup:example` in `server/`: it copies a sample outlook into place.
 

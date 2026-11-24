@@ -1,6 +1,6 @@
 # Surf Report
 
-Find out whether it's worth paddling out. Enter a U.S. zip code, pick a nearby surf spot, and see a week of hourly conditions for that spot: tides, wind, the latest buoy reading, a swell forecast, and a good / fair / poor rating for every hour. Gear recommendations are planned.
+Find out whether it's worth paddling out. Enter a U.S. zip code, pick a nearby surf spot, and see a week of hourly conditions for that spot: tides, wind, the latest buoy reading, a swell forecast, and a good / fair / poor rating for every hour. A short AI-written outlook compares the spots for the week ahead. Gear recommendations are planned.
 
 ## Features
 
@@ -12,14 +12,15 @@ Find out whether it's worth paddling out. Enter a U.S. zip code, pick a nearby s
 - **Wind at the spot:** an arrow on the map that points the way the wind is blowing. Its length follows the speed and its thickness the gusts.
 - **Swell:** the latest measurement from the spot's chosen buoy, plus an hourly forecast of primary and secondary swell.
 - **Hover the tide chart** to see the rating, wind and swell forecast for any hour.
+- **Weekly outlook:** a short write-up of the coming week across all the spots, e.g. *"Small until Thursday, then a clean southeast swell makes Friday the day"*, with the best spot and time of day for each day worth surfing. Claude writes it from the app's own ratings and data, three times a day; it's labelled as AI-generated and shows when it was written. Optional: it needs an Anthropic API key (see below).
 
 **Zip-based report:** for zip codes with no spots defined yet (for example `92651`, Laguna Beach), you get the tides, wind and swell for the zip code itself, without ratings.
 
-No API keys or accounts are needed.
+Everything except the weekly outlook works without API keys or accounts.
 
 ## Getting started
 
-You need [Node.js](https://nodejs.org/) 20 or later. The server and client are separate npm projects, so install and run each one in its own terminal.
+You need [Node.js](https://nodejs.org/) 22.9 or later. The server and client are separate npm projects, so install and run each one in its own terminal.
 
 ```bash
 # Terminal 1: API server on http://localhost:3001
@@ -38,6 +39,17 @@ npm run dev
 Open http://localhost:5173 and enter `02882` (Narragansett, RI) to see the spots, or another coastal zip code such as `92651` (Laguna Beach, CA) for the zip-based report.
 
 The server downloads NOAA's tide stations and NDBC's buoy list when it starts, so give it a few seconds before searching. The client's dev server forwards `/api` requests to port 3001, so the server must be running too.
+
+### The weekly outlook (optional)
+
+The outlook is written by [Claude](https://www.anthropic.com/claude) (Claude Opus 5.5) through the Anthropic API, which is billed separately from a Claude Pro or Max subscription. At three write-ups a day it costs roughly $5–6 a month. It's off unless you turn it on:
+
+1. In the [Claude Console](https://console.anthropic.com/), create a workspace with a monthly spend limit and an API key in it.
+2. Copy `server/.env.example` to `server/.env`, then set `ANTHROPIC_API_KEY` and `WRITEUP_ENABLED=true`. `npm run dev` loads this file; it's gitignored. Keep the key on the server only, and never give it a `VITE_` prefix, which would build it into the public JavaScript.
+
+The server then writes an outlook when it starts (unless the saved one is still current) and again at 4 am, 12 pm and 8 pm New York time, and saves it to `server/.cache/writeup.json`, so restarts don't call the API again. Visitors only ever get the saved copy.
+
+To see the panel without a key, run `npm run writeup:example` in `server/`: it copies a sample outlook into place.
 
 ## API
 
@@ -123,6 +135,29 @@ Everything for one spot. Returns 404 for an unknown spot id.
 
 The zip-based report used for zip codes without spots: the same tides, wind, buoy and forecast fields, located from the zip code's center (`zipLocation`) instead of a spot, using the nearest buoy and with no ratings. `status` is `"ok"`, `"unknown_zip"` or `"no_nearby_station"`, and unknown zip codes still return HTTP 200, so check `status` before reading the rest.
 
+### `GET /api/writeup`
+
+The saved weekly outlook. It never calls the AI model: it only returns the last saved write-up. Always HTTP 200; check `status`.
+
+```jsonc
+{
+  "status": "ok",                          // or "not_available", with a "message"
+  "region": "South County",
+  "generatedAt": "2026-11-23T17:00:09.000Z",
+  "writeup": {
+    "headline": "Small and wind-affected until Thursday, then a clean southeast swell makes Friday and Saturday the days to go.",
+    "days": [                              // only days worth surfing
+      {
+        "date": "2026-11-27",              // local date
+        "summary": "The best day of the week...",
+        "bestBets": [{ "spotId": "point-judith", "block": "afternoon" }]   // block: dawn | morning | afternoon | evening
+      }
+    ],
+    "caveats": ["Friday's swell size depends on a storm that is still a long way offshore..."]
+  }
+}
+```
+
 ### `GET /health`
 
 Returns `200` when the server is up.
@@ -138,6 +173,10 @@ Each hour gets a rating for swell and for wind, and the overall rating is the **
 
 The thresholds and each spot's swell window are first estimates, to be tuned against days with known conditions. Tide isn't part of the rating yet.
 
+### The weekly outlook
+
+The app's own code does the judging, and the model only explains and compares. For each spot and each day, the server reduces the hourly data to four blocks (dawn 5–8, morning 8–12, afternoon 12–4, evening 4–7) and finds the tide highs and lows. The model gets only that summary (no user input ever reaches it) and must reply in a fixed JSON shape. Before the reply is saved, every best bet is checked against the ratings: a spot or block that isn't rated fair or good that day is removed. The plan and its reasoning are in [docs/llm-weekly-writeup.md](docs/llm-weekly-writeup.md).
+
 ## Development
 
 | | Command | |
@@ -146,6 +185,7 @@ The thresholds and each spot's swell window are first estimates, to be tuned aga
 | | `npm test` | Run unit tests ([Vitest](https://vitest.dev/)) |
 | | `npm run test:watch` | Re-run tests on every save |
 | | `npx tsc --noEmit` | Type-check (`npm run dev` doesn't) |
+| | `npm run writeup:example` | Save a sample weekly outlook, to see the panel without an API key |
 | Client | `npm run dev` | Start the Vite dev server |
 | | `npm run build` | Type-check and build for production |
 | | `npm run lint` | Run ESLint |
@@ -167,16 +207,19 @@ server/                 Express 5 + TypeScript API
   src/index.ts          Startup and routes
   src/data/             Hand-curated surf spots
   src/model/            Response shapes returned by the API
-  src/service/          One file per data source (NOAA tides, NWS wind, NDBC buoys, Open-Meteo swell),
-                        plus spot lookup and the per-spot conditions
-  src/util/             Small pure helpers with tests (ratings, distance, NWS and NDBC parsing)
+  src/service/          Fetching and orchestration, one folder per data source or feature:
+                        ndbc/, noaa/, nws/, open-meteo/, spots/ (spot lookup, conditions), writeup/
+  src/util/             Small pure helpers with tests, in matching folders: ndbc/, nws/,
+                        rating/, writeup/ (week summary, prompt, schema, validation, schedule), geo/
+  fixtures/             A sample weekly outlook (npm run writeup:example)
 client/                 React 19 + Vite + TypeScript
-  src/components/       Zip form, spots map, tide chart (Recharts), station map (MapLibre), captions
+  src/components/       Zip form, spots map, tide chart (Recharts), station map (MapLibre), captions,
+                        weekly outlook panel
   src/hooks/            Custom React hooks (smooth arrow rotation)
   src/services/         Calls to the API
   src/types/            API response shapes (copied from server/src/model)
   src/utils/            Small pure helpers (compass directions, wind arrow, rating bands)
-docs/research/          Notes on data sources (buoys, wind, maps, surf spots)
+docs/                   Plan for the weekly outlook; research/ has notes on data sources
 ```
 
 ## Data sources
@@ -187,6 +230,7 @@ docs/research/          Notes on data sources (buoys, wind, maps, surf spots)
 | Wind forecast | [National Weather Service API](https://www.weather.gov/documentation/services-web-api) (api.weather.gov) |
 | Buoy measurements | [NOAA National Data Buoy Center](https://www.ndbc.noaa.gov/) realtime files |
 | Swell forecast | [Open-Meteo Marine API](https://open-meteo.com/en/docs/marine-weather-api) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); free for **non-commercial** use) |
+| Weekly outlook | [Claude](https://www.anthropic.com/claude) (Anthropic API), written from the data above |
 | Zip code locations | [`zipcodes`](https://www.npmjs.com/package/zipcodes) npm package (offline) |
 | Spot coastline directions, map tiles | [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors; tiles by [OpenFreeMap](https://openfreemap.org/) |
 

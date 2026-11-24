@@ -1,0 +1,65 @@
+{
+  "region": "South County",
+  "generatedAt": "2026-11-23T17:00:09.000Z",
+  "writeup": {
+    "headline": "Small and wind-affected until Thursday, then a clean southeast swell makes Friday and Saturday the days to go, with Point Judith and Monahan's Dock the pick.",
+    "days": [
+      {
+        "date": "2026-11-23",
+        "summary": "Knee-high and choppy this afternoon: about 1.5 ft at 7 s with a 15 mph southwest wind blowing onshore at every spot. Not worth the drive.",
+        "bestBets": []
+      },
+      {
+        "date": "2026-11-24",
+        "summary": "Wind swings to the north-northeast overnight and cleans things up at dawn, but the swell is still small (about 1.6 ft at 8 s). Town Beach and Scarborough are fair for an early longboard session before the wind picks up past 12 mph.",
+        "bestBets": [
+          { "spotId": "narragansett-town-beach", "block": "dawn" },
+          { "spotId": "scarborough", "block": "dawn" }
+        ]
+      },
+      {
+        "date": "2026-11-25",
+        "summary": "Much the same: small southeast swell, light northerly wind at dawn turning cross-shore by mid-morning. Fair at dawn for Town Beach, Monahan's Dock and Scarborough; poor after that.",
+        "bestBets": [
+          { "spotId": "narragansett-town-beach", "block": "dawn" },
+          { "spotId": "monahans-dock", "block": "dawn" },
+          { "spotId": "scarborough", "block": "dawn" }
+        ]
+      },
+      {
+        "date": "2026-11-26",
+        "summary": "The new southeast swell starts to show in the afternoon (2.5 ft at 10 s). Morning is still small; Matunuck is fair at dawn on the offshore northwest wind, and the beaches improve late in the day.",
+        "bestBets": [
+          { "spotId": "matunuck", "block": "dawn" },
+          { "spotId": "narragansett-town-beach", "block": "evening" }
+        ]
+      },
+      {
+        "date": "2026-11-27",
+        "summary": "The best day of the week. The swell peaks around 3.5 ft at 11 s from the southeast, well inside every spot's window, with a light west-northwest wind. Point Judith and Monahan's Dock are rated good all afternoon; Town Beach is good at dawn too.",
+        "bestBets": [
+          { "spotId": "narragansett-town-beach", "block": "dawn" },
+          { "spotId": "point-judith", "block": "afternoon" },
+          { "spotId": "monahans-dock", "block": "afternoon" }
+        ]
+      },
+      {
+        "date": "2026-11-28",
+        "summary": "Still good in the morning as the swell eases to about 3 ft at 10 s and the wind stays offshore. It turns south and onshore after lunch, so go early: Point Judith and Matunuck are the best bets.",
+        "bestBets": [
+          { "spotId": "point-judith", "block": "morning" },
+          { "spotId": "matunuck", "block": "morning" }
+        ]
+      },
+      {
+        "date": "2026-11-29",
+        "summary": "Fading and blown out: under 2 ft with a 15–20 mph south wind. Poor everywhere.",
+        "bestBets": []
+      }
+    ],
+    "caveats": [
+      "Friday's swell size depends on a storm that is still a long way offshore, so expect the numbers to change in the next few updates.",
+      "Tide isn't part of the ratings yet, so check the tide chart for the spot you pick."
+    ]
+  }
+}

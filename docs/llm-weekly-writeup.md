@@ -1,6 +1,6 @@
 # Plan: LLM-generated weekly write-up
 
-Status: build steps 1, 3 and 4 done, plus a stub for step 2 (no model call yet: `service/writeup.service.ts`). Updated 2026-11-23.
+Status: all five build steps are built; not yet run against the real API. Since this plan was written, the model was changed to **Claude Sonnet 5.5** and the refresh to **once a day at 4 am**, both to cut cost (about $1 a month); see `MODEL` in `service/writeup/writeup.service.ts` and `REFRESH_HOURS` in `util/writeup/writeup-schedule.ts`. Updated 2026-11-23.
 
 Goal: one short, readable outlook for the coming week covering **all the spots in the region**, e.g. *"Flat until Thursday, when Matunuck is the best bet at dawn before the wind turns onshore."* An LLM writes it from the data the app already has. It's generated when the server starts and refreshed three times a day, at **4 am, 12 pm and 8 pm** local time.
 

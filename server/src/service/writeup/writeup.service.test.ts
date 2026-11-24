@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DayBlock, SpotDaySummary, SpotSummary, WeekSummary } from "../../model/week-summary";
 import { Rating } from "../../model/hour-rating";
-import { buildStubWriteup, generateWriteup } from "./writeup.service";
+import { buildStubWriteup, readWriteupReply, WriteupReply } from "./writeup.service";
 
 // Only the fields the stub reads matter; the rest are filler so the fixture satisfies WeekSummary.
 function day(date: string, ratings: Partial<Record<DayBlock, Rating>>): SpotDaySummary {
@@ -128,13 +128,30 @@ describe("buildStubWriteup", () => {
     });
 });
 
-describe("generateWriteup", () => {
-    it("returns the stub write-up", async () => {
-        expect(await generateWriteup(mixedWeek)).toEqual(buildStubWriteup(mixedWeek));
+// generateWriteup itself calls the API, so it isn't tested here (tests must never spend money).
+// What it does with the reply is readWriteupReply, tested with made-up replies.
+describe("readWriteupReply", () => {
+    const writeup = buildStubWriteup(mixedWeek);
+    const finished: WriteupReply = { stop_reason: "end_turn", stop_details: null, parsed_output: writeup };
+
+    it("returns the parsed write-up when the model finished", () => {
+        expect(readWriteupReply(finished)).toBe(writeup);
     });
 
-    it("returns null instead of throwing on bad input", async () => {
-        const broken = { region: "South County", spots: null } as unknown as WeekSummary;
-        expect(await generateWriteup(broken)).toBeNull();
+    it("returns null for a refusal", () => {
+        const refused: WriteupReply = {
+            stop_reason: "refusal",
+            stop_details: { type: "refusal", category: null, explanation: null },
+            parsed_output: null,
+        };
+        expect(readWriteupReply(refused)).toBeNull();
+    });
+
+    it("returns null for a reply cut off by max_tokens, even if part of it parsed", () => {
+        expect(readWriteupReply({ ...finished, stop_reason: "max_tokens" })).toBeNull();
+    });
+
+    it("returns null when the reply didn't match the schema", () => {
+        expect(readWriteupReply({ ...finished, parsed_output: null })).toBeNull();
     });
 });

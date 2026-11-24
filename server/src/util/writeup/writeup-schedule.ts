@@ -2,7 +2,7 @@ import { StoredWriteup } from "../../model/writeup";
 
 // Local hours (in the region's time zone) at which the write-up is regenerated. Fixed times, rather
 // than "every 8 hours", so restarts don't shift the schedule; 4 am has a fresh outlook ready for dawn.
-export const REFRESH_HOURS = [4, 12, 20];
+export const REFRESH_HOURS = [4];
 
 // The latest scheduled time at or before `now`. If now is exactly 12:00, that's 12:00 itself.
 export function mostRecentScheduledTime(now: Date, timeZone: string, hours: number[] = REFRESH_HOURS): Date {
@@ -22,8 +22,9 @@ export function nextScheduledTime(now: Date, timeZone: string, hours: number[] =
 }
 
 // A saved write-up is stale if there isn't one, or it was generated before the most recent refresh
-// time (e.g. after a restart at 1 pm, one from 12:05 pm is fresh but one from 4:05 am missed 12 pm).
-export function isStale(stored: StoredWriteup | null, now: Date, timeZone: string): boolean {
+// time (e.g. with refreshes at 4 am and 12 pm, after a restart at 1 pm a copy from 12:05 pm is fresh but
+// one from 4:05 am missed the 12 pm refresh).
+export function isStale(stored: StoredWriteup | null, now: Date, timeZone: string, hours: number[] = REFRESH_HOURS): boolean {
     if (!stored) {
         return true;
     }
@@ -32,7 +33,7 @@ export function isStale(stored: StoredWriteup | null, now: Date, timeZone: strin
     if (Number.isNaN(generatedAt)) {
         return true;
     }
-    return generatedAt < mostRecentScheduledTime(now, timeZone).getTime();
+    return generatedAt < mostRecentScheduledTime(now, timeZone, hours).getTime();
 }
 
 // Every scheduled instant on the given local days (offsets from today, e.g. -1 = yesterday), sorted.

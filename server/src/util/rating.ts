@@ -1,24 +1,26 @@
 import { HourRating, Rating } from "../model/hour-rating";
 import { Spot } from "../model/spot";
 import { SwellForecast, WaveComponent } from "../model/swell-forecast";
+import { WindRelation } from "../model/week-summary";
 import { WindForecast } from "../model/wind-forecast";
 
 // Thresholds for version 1: a starting point to tune against days you know.
-const SWELL_POOR_BELOW_FT = 1.5;
-const SWELL_GOOD_FROM_FT = 3;
-const PERIOD_POOR_BELOW_S = 6;
-const PERIOD_GOOD_FROM_S = 9;
+// Exported so util/week-summary.ts can describe the rules to the LLM from the same numbers.
+export const SWELL_POOR_BELOW_FT = 1.5;
+export const SWELL_GOOD_FROM_FT = 3;
+export const PERIOD_POOR_BELOW_S = 6;
+export const PERIOD_GOOD_FROM_S = 9;
 // Size makes up for period: a big, mid-period swell (e.g. 7 ft @ 8 s after a storm) is good too.
 // Tuned 2026-11-23, when Monahan's Dock and Town Beach were good on ~7 ft @ 8 s SSE (Open-Meteo)
 // and the 9 s rule alone rated them fair.
-const BIG_SWELL_GOOD_FROM_FT = 5;
-const BIG_SWELL_PERIOD_GOOD_FROM_S = 7;
-const WIND_LIGHT_BELOW_MPH = 6; // any direction is fine when it's this light
-const WIND_ONSHORE_POOR_ABOVE_MPH = 12;
+export const BIG_SWELL_GOOD_FROM_FT = 5;
+export const BIG_SWELL_PERIOD_GOOD_FROM_S = 7;
+export const WIND_LIGHT_BELOW_MPH = 6; // any direction is fine when it's this light
+export const WIND_ONSHORE_POOR_ABOVE_MPH = 12;
 // Wind within 45° of straight offshore counts as offshore, within 45° of straight onshore as onshore,
 // anything in between as cross-shore.
-const OFFSHORE_WITHIN_DEG = 45;
-const ONSHORE_WITHIN_DEG = 45;
+export const OFFSHORE_WITHIN_DEG = 45;
+export const ONSHORE_WITHIN_DEG = 45;
 
 const RATING_ORDER: Rating[] = ["poor", "fair", "good"];
 
@@ -58,7 +60,7 @@ function rateSwell(spot: Spot, forecast: SwellForecast): { rating: Rating; reaso
     }
 
     const rated = components.map((component) => rateSwellComponent(spot, component));
-    return rated.reduce((best, next) => (rank(next.rating) > rank(best.rating) ? next : best));
+    return rated.reduce((best, next) => (ratingRank(next.rating) > ratingRank(best.rating) ? next : best));
 }
 
 function rateSwellComponent(spot: Spot, swell: WaveComponent): { rating: Rating; reason: string } {
@@ -96,19 +98,31 @@ function rateWind(spot: Spot, wind: WindForecast): { rating: Rating; reason: str
         return { rating: "fair", reason: `${description} (direction unknown)` };
     }
 
-    // Offshore wind blows from the land out to sea, i.e. FROM the direction opposite the one the
-    // break faces. A break facing 135° (SE) has offshore wind from 315° (NW).
-    const offshoreFromDeg = (spot.facingDeg + 180) % 360;
-    const offOffshore = angleBetween(wind.directionDeg, offshoreFromDeg);
-    if (offOffshore <= OFFSHORE_WITHIN_DEG) {
+    const relation = windRelation(spot, wind.directionDeg);
+    if (relation === "offshore") {
         return { rating: "good", reason: `${description} (offshore)` };
     }
-    if (offOffshore >= 180 - ONSHORE_WITHIN_DEG) {
+    if (relation === "onshore") {
         return wind.speedMph > WIND_ONSHORE_POOR_ABOVE_MPH
             ? { rating: "poor", reason: `${description} (strong onshore)` }
             : { rating: "fair", reason: `${description} (onshore)` };
     }
     return { rating: "fair", reason: `${description} (cross-shore)` };
+}
+
+// Offshore wind blows from the land out to sea, i.e. FROM the direction opposite the one the break
+// faces: a break facing 135° (SE) has offshore wind from 315° (NW). Onshore is the reverse, and
+// anything in between is cross-shore. Speed isn't considered here; light wind is rated separately.
+export function windRelation(spot: Spot, directionDeg: number): WindRelation {
+    const offshoreFromDeg = (spot.facingDeg + 180) % 360;
+    const offOffshore = angleBetween(directionDeg, offshoreFromDeg);
+    if (offOffshore <= OFFSHORE_WITHIN_DEG) {
+        return "offshore";
+    }
+    if (offOffshore >= 180 - ONSHORE_WITHIN_DEG) {
+        return "onshore";
+    }
+    return "cross-shore";
 }
 
 // The smallest angle between two directions, 0–180. E.g. 350° and 10° are 20° apart.
@@ -124,10 +138,11 @@ export function isInWindow(direction: number, min: number, max: number): boolean
 }
 
 function worst(ratings: Rating[]): Rating {
-    return ratings.reduce((a, b) => (rank(b) < rank(a) ? b : a));
+    return ratings.reduce((a, b) => (ratingRank(b) < ratingRank(a) ? b : a));
 }
 
-function rank(rating: Rating): number {
+// 0 for poor, 1 fair, 2 good, so ratings can be compared with < and >.
+export function ratingRank(rating: Rating): number {
     return RATING_ORDER.indexOf(rating);
 }
 
@@ -135,6 +150,7 @@ function hourKey(time: string): number {
     return Math.floor(Date.parse(time) / MS_PER_HOUR);
 }
 
-function toCompass(degrees: number): string {
+// 16-point compass name for a direction in degrees, e.g. 135 -> "SE".
+export function toCompass(degrees: number): string {
     return COMPASS_POINTS[Math.round(degrees / 22.5) % 16] ?? "";
 }
